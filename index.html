@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carnet de bord — Poêle à granulés</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-title-block">
+      <h1>Carnet de bord <span>du poêle</span></h1>
+      <p>Suivi des sessions de chauffe, des achats et du stock de granulés.</p>
+      <p id="syncStatus" style="font-size:11.5px; color:var(--text-muted); margin-top:6px;"></p>
+    </div>
+
+    <div class="gauge-card">
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 100 100" width="96" height="96">
+          <circle class="gauge-track" cx="50" cy="50" r="40"></circle>
+          <circle id="gaugeFill" class="gauge-fill" cx="50" cy="50" r="40"></circle>
+        </svg>
+        <div class="gauge-center">
+          <div class="num" id="gaugeNum">—</div>
+          <div class="unit">sacs</div>
+        </div>
+      </div>
+      <div class="gauge-meta">
+        <div class="label">Autonomie estimée</div>
+        <div class="value" id="autonomyValue">—</div>
+        <div class="label" style="margin-top:8px;">Dernier relevé</div>
+        <div class="value" id="stockDate">—</div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-target="panel-dashboard">Tableau de bord</button>
+    <button data-target="panel-sessions">Sessions</button>
+    <button data-target="panel-achats">Achats &amp; stock</button>
+    <button data-target="panel-settings">Réglages</button>
+  </nav>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section class="panel active" id="panel-dashboard">
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="chart-grid">
+      <div class="card"><h3>Stock de granulés dans le temps</h3><canvas id="chartStock"></canvas></div>
+      <div class="card"><h3>Nombre de sessions par mois</h3><canvas id="chartSessions"></canvas></div>
+      <div class="card"><h3>Température ambiante moyenne</h3><canvas id="chartTemp"></canvas></div>
+      <div class="card"><h3>Coût par mois</h3><canvas id="chartCout"></canvas></div>
+      <div class="card"><h3>Sacs consommés par mois</h3><canvas id="chartSacsConso"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ============ SESSIONS ============ -->
+  <section class="panel" id="panel-sessions">
+
+    <div class="form-card">
+      <h3>Ajouter une session</h3>
+      <form id="formSession">
+
+        <div class="field-group-title">Horaires</div>
+        <div class="form-grid">
+          <div class="field"><label>Date</label><input type="date" name="date" required></div>
+          <div class="field"><label>Heure allumage</label><input type="time" name="allumage"></div>
+          <div class="field"><label>Heure arrêt</label><input type="time" name="arret"></div>
+          <div class="field"><label>Durée (calculée)</label><div class="duree-display" id="dureeDisplay">renseigne l'allumage et l'arrêt</div></div>
+        </div>
+
+        <div class="field-group-title">Réglages</div>
+        <div class="form-grid">
+          <div class="field"><label>Puissance</label><input type="number" step="1" name="puissance"></div>
+          <div class="field"><label>Temp. demandée (°C)</label><input type="number" step="0.1" name="temp_demandee"></div>
+        </div>
+
+        <div class="field-group-title">Températures ambiantes</div>
+        <div class="form-grid">
+          <div class="field"><label>Bas / général</label><input type="number" step="0.1" name="temp_ambiante_bas"></div>
+          <div class="field"><label>Chambre O</label><input type="number" step="0.1" name="temp_ambiante_o"></div>
+          <div class="field"><label>Chambre Z</label><input type="number" step="0.1" name="temp_ambiante_z"></div>
+          <div class="field"><label>Chambre N</label><input type="number" step="0.1" name="temp_ambiante_n"></div>
+        </div>
+
+        <div class="field-group-title">Températures à l'arrêt du poêle</div>
+        <div class="form-grid">
+          <div class="field"><label>Bas / général</label><input type="number" step="0.1" name="temp_arret_bas"></div>
+          <div class="field"><label>Chambre O</label><input type="number" step="0.1" name="temp_arret_o"></div>
+          <div class="field"><label>Chambre Z</label><input type="number" step="0.1" name="temp_arret_z"></div>
+          <div class="field"><label>Chambre N</label><input type="number" step="0.1" name="temp_arret_n"></div>
+        </div>
+
+        <div class="field-group-title">Actions</div>
+        <div class="toggle-row">
+          <button type="button" class="toggle-btn" id="btnNettoyage" data-role="nettoyage">🧹 Nettoyage</button>
+          <button type="button" class="toggle-btn" id="btnCharge" data-role="charge">🔄 Charge granulés</button>
+        </div>
+
+        <div class="field" style="margin-bottom:14px;"><label>Commentaires</label><textarea name="commentaires" placeholder="Notes libres sur la session…"></textarea></div>
+        <button class="btn" type="submit">+ Ajouter la session</button>
+      </form>
+    </div>
+
+    <div class="table-toolbar">
+      <h3 style="margin:0;">Historique des sessions</h3>
+      <input type="search" id="searchSessions" placeholder="Rechercher (date, commentaire…)">
+    </div>
+    <div class="session-list" id="sessionList"></div>
+    <div class="empty-state" id="sessionsEmpty" style="display:none;">Aucune session pour l'instant — ajoute la première ci-dessus.</div>
+  </section>
+
+  <!-- ============ ACHATS & STOCK ============ -->
+  <section class="panel" id="panel-achats">
+
+    <div class="form-card stock-current-card">
+      <div>
+        <div class="label" style="font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:6px;">Stock actuel</div>
+        <div class="big" id="stockCurrentBig">0<span class="u">sacs</span></div>
+      </div>
+      <button class="btn secondary" id="btnMoinsUnSac">− 1 sac utilisé</button>
+    </div>
+
+    <div class="chart-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Ajouter un achat</h3>
+        <form id="formAchat">
+          <div class="form-grid">
+            <div class="field"><label>Date</label><input type="date" name="date" required></div>
+            <div class="field"><label>Magasin</label><input type="text" name="magasin" placeholder="Leroy Merlin"></div>
+            <div class="field"><label>Marque</label><input type="text" name="marque" placeholder="Woodstock"></div>
+            <div class="field"><label>Nombre de sacs</label><input type="number" step="1" name="nb_sacs" required></div>
+            <div class="field"><label>Prix / sac (€)</label><input type="number" step="0.01" name="prix_sac" required></div>
+          </div>
+          <div class="field" style="margin-bottom:14px;"><label>Note</label><input type="text" name="note" placeholder="ex: remise fidélité"></div>
+          <button class="btn" type="submit">+ Ajouter l'achat (et ajouter au stock)</button>
+        </form>
+      </div>
+
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Corriger le stock (inventaire)</h3>
+        <form id="formStock">
+          <div class="form-grid">
+            <div class="field"><label>Date</label><input type="date" name="date" required></div>
+            <div class="field"><label>Stock (sacs)</label><input type="number" step="0.5" name="stock_sacs" required></div>
+          </div>
+          <button class="btn secondary" type="submit">Enregistrer le relevé</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="chart-grid" style="grid-template-columns: 1fr 1fr;">
+      <div>
+        <h3 style="font-family:var(--font-display); font-weight:500; margin-bottom:14px;">Achats</h3>
+        <div class="table-scroll">
+          <table id="achatsTable">
+            <thead><tr><th>Date</th><th>Magasin</th><th>Marque</th><th>Sacs</th><th>Prix/sac</th><th>Total</th><th>Note</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-state" id="achatsEmpty" style="display:none;">Aucun achat enregistré.</div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-family:var(--font-display); font-weight:500; margin-bottom:14px;">Relevés de stock</h3>
+        <div class="table-scroll">
+          <table id="stockTable">
+            <thead><tr><th>Date</th><th>Stock</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-state" id="stockEmpty" style="display:none;">Aucun relevé de stock.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="panel" id="panel-settings">
+    <div class="settings-grid">
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Capacité de stockage</h3>
+        <div class="field">
+          <label>Stock "plein" (nombre de sacs de référence pour la jauge)</label>
+          <input type="number" step="1" id="capaciteInput">
+        </div>
+        <p class="hint">Sert uniquement à calculer le remplissage de la jauge en haut de page.</p>
+      </div>
+
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Export</h3>
+        <p class="hint" style="margin-top:0;">Exporte tes données (stockées dans Supabase) en Excel pour les consulter ou les archiver, ou en JSON pour une sauvegarde.</p>
+        <div class="btn-row">
+          <button class="btn" id="btnExportExcel">⬇ Exporter en Excel (.xlsx)</button>
+          <button class="btn secondary" id="btnExportJson">⬇ Exporter en JSON</button>
+        </div>
+      </div>
+
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Réinitialisation</h3>
+        <p class="hint" style="margin-top:0;">Supprime définitivement toutes les sessions, achats et relevés de stock dans Supabase. Irréversible.</p>
+        <button class="btn ghost" id="btnResetAll">↺ Tout supprimer</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Carnet de bord perso — données stockées dans Supabase, synchronisées entre tous tes appareils. · <a href="ajouter.html">Page d'ajout rapide (mobile)</a>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

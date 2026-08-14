@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajouter une session — Poêle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap { max-width: 520px; padding-top: 24px; }
+  header.hero { border-bottom: none; padding-bottom: 0; margin-bottom: 16px; display: block; }
+  header.hero h1 { font-size: 24px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    padding: 12px 20px; border-radius: 100px; font-size: 13.5px; opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--bad); color: var(--bad); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-title-block">
+      <h1>+ Session <span>du poêle</span></h1>
+      <p style="margin-top:4px;">Ajout rapide — synchronisé avec le tableau de bord.</p>
+    </div>
+  </header>
+
+  <div class="form-card">
+    <form id="formSession">
+      <div class="field-group-title">Horaires</div>
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input type="date" name="date" required></div>
+        <div class="field"><label>Heure allumage</label><input type="time" name="allumage"></div>
+        <div class="field"><label>Heure arrêt</label><input type="time" name="arret"></div>
+        <div class="field"><label>Durée (calculée)</label><div class="duree-display" id="dureeDisplay">renseigne l'allumage et l'arrêt</div></div>
+      </div>
+
+      <div class="field-group-title">Réglages</div>
+      <div class="form-grid">
+        <div class="field"><label>Puissance</label><input type="number" step="1" name="puissance"></div>
+        <div class="field"><label>Temp. demandée (°C)</label><input type="number" step="0.1" name="temp_demandee"></div>
+      </div>
+
+      <div class="field-group-title">Températures ambiantes</div>
+      <div class="form-grid">
+        <div class="field"><label>Bas / général</label><input type="number" step="0.1" name="temp_ambiante_bas"></div>
+        <div class="field"><label>Chambre O</label><input type="number" step="0.1" name="temp_ambiante_o"></div>
+        <div class="field"><label>Chambre Z</label><input type="number" step="0.1" name="temp_ambiante_z"></div>
+        <div class="field"><label>Chambre N</label><input type="number" step="0.1" name="temp_ambiante_n"></div>
+      </div>
+
+      <div class="field-group-title">Températures à l'arrêt</div>
+      <div class="form-grid">
+        <div class="field"><label>Bas / général</label><input type="number" step="0.1" name="temp_arret_bas"></div>
+        <div class="field"><label>Chambre O</label><input type="number" step="0.1" name="temp_arret_o"></div>
+        <div class="field"><label>Chambre Z</label><input type="number" step="0.1" name="temp_arret_z"></div>
+        <div class="field"><label>Chambre N</label><input type="number" step="0.1" name="temp_arret_n"></div>
+      </div>
+
+      <div class="field-group-title">Actions</div>
+      <div class="toggle-row">
+        <button type="button" class="toggle-btn" id="btnNettoyage" data-role="nettoyage">🧹 Nettoyage</button>
+        <button type="button" class="toggle-btn" id="btnCharge" data-role="charge">🔄 Charge granulés</button>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;"><label>Commentaires</label><textarea name="commentaires" placeholder="Notes libres…"></textarea></div>
+      <button class="btn" type="submit" style="width:100%;">+ Enregistrer la session</button>
+    </form>
+  </div>
+
+  <p style="text-align:center;"><a href="index.html">← Voir le tableau de bord complet</a></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  function num(v, digits = 1) { if (v === null || v === undefined || v === "" || isNaN(v)) return null; return Number(Number(v).toFixed(digits)); }
+  function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+  function computeDuration(allumage, arret) {
+    if (!allumage || !arret) return { h: null, label: null };
+    const [ah, am] = allumage.split(":").map(Number);
+    const [rh, rm] = arret.split(":").map(Number);
+    if ([ah, am, rh, rm].some((n) => isNaN(n))) return { h: null, label: null };
+    let diff = (rh * 60 + rm) - (ah * 60 + am);
+    if (diff <= 0) diff += 24 * 60;
+    const hh = Math.floor(diff / 60), mm = diff % 60;
+    return { h: num(diff / 60, 2), label: `${hh}h${mm.toString().padStart(2, "0")}` };
+  }
+
+  function showToast(msg, isError = false) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast show" + (isError ? " error" : "");
+    setTimeout(() => { t.className = "toast"; }, 2600);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("formSession");
+    form.date.value = todayISO();
+    const allumageInput = form.allumage, arretInput = form.arret;
+    const dureeDisplay = document.getElementById("dureeDisplay");
+    let currentDuree = { h: null, label: null };
+
+    function updateDuree() {
+      currentDuree = computeDuration(allumageInput.value, arretInput.value);
+      dureeDisplay.textContent = currentDuree.label ? `${currentDuree.label} (${currentDuree.h} h)` : "renseigne l'allumage et l'arrêt";
+    }
+    allumageInput.addEventListener("input", updateDuree);
+    arretInput.addEventListener("input", updateDuree);
+
+    document.querySelectorAll(".toggle-btn[data-role]").forEach((btn) => {
+      btn.addEventListener("click", () => btn.classList.toggle("active"));
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      updateDuree();
+      const f = e.target;
+      const entry = {
+        date: f.date.value || todayISO(),
+        allumage: f.allumage.value || null,
+        arret: f.arret.value || null,
+        duree_h: currentDuree.h,
+        duree_label: currentDuree.label,
+        puissance: f.puissance.value ? Number(f.puissance.value) : null,
+        temp_demandee: f.temp_demandee.value ? Number(f.temp_demandee.value) : null,
+        temp_ambiante_bas: f.temp_ambiante_bas.value ? Number(f.temp_ambiante_bas.value) : null,
+        temp_ambiante_o: f.temp_ambiante_o.value ? Number(f.temp_ambiante_o.value) : null,
+        temp_ambiante_z: f.temp_ambiante_z.value ? Number(f.temp_ambiante_z.value) : null,
+        temp_ambiante_n: f.temp_ambiante_n.value ? Number(f.temp_ambiante_n.value) : null,
+        temp_arret_bas: f.temp_arret_bas.value ? Number(f.temp_arret_bas.value) : null,
+        temp_arret_o: f.temp_arret_o.value ? Number(f.temp_arret_o.value) : null,
+        temp_arret_z: f.temp_arret_z.value ? Number(f.temp_arret_z.value) : null,
+        temp_arret_n: f.temp_arret_n.value ? Number(f.temp_arret_n.value) : null,
+        nettoyage: document.getElementById("btnNettoyage").classList.contains("active"),
+        charge: document.getElementById("btnCharge").classList.contains("active"),
+        commentaires: f.commentaires.value || null,
+      };
+      const { error } = await db.from("sessions").insert(entry);
+      if (error) { console.error(error); showToast("Erreur d'enregistrement", true); return; }
+      showToast("Session enregistrée ✓");
+      f.reset();
+      form.date.value = todayISO();
+      dureeDisplay.textContent = "renseigne l'allumage et l'arrêt";
+      document.getElementById("btnNettoyage").classList.remove("active");
+      document.getElementById("btnCharge").classList.remove("active");
+    });
+  });
+</script>
+</body>
+</html>
