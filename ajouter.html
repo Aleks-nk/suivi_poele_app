@@ -25,7 +25,20 @@
 </head>
 <body>
 
-<div class="wrap">
+<div id="loginGate">
+  <div class="login-card">
+    <h2>🔥 Carnet du poêle</h2>
+    <p class="sub">Accès réservé au foyer — connecte-toi avec le mot de passe partagé.</p>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <div class="login-error" id="loginError"></div>
+      <button class="btn" type="submit">Se connecter</button>
+    </form>
+  </div>
+</div>
+
+<div class="wrap" id="appRoot" style="display:none;">
   <header class="hero">
     <div class="hero-title-block">
       <h1>+ Session <span>du poêle</span></h1>
@@ -77,12 +90,14 @@
   </div>
 
   <p style="text-align:center;"><a href="index.html">← Voir le tableau de bord complet</a></p>
+  <p style="text-align:center; margin-top:16px;"><button class="btnLogout">Se déconnecter</button></p>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="auth.js"></script>
 <script>
   function num(v, digits = 1) { if (v === null || v === undefined || v === "" || isNaN(v)) return null; return Number(Number(v).toFixed(digits)); }
   function todayISO() { return new Date().toISOString().slice(0, 10); }
@@ -106,6 +121,10 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    initAuthGate(startAjoutApp);
+  });
+
+  function startAjoutApp() {
     const form = document.getElementById("formSession");
     form.date.value = todayISO();
     const allumageInput = form.allumage, arretInput = form.arret;
@@ -156,7 +175,7 @@
       document.getElementById("btnNettoyage").classList.remove("active");
       document.getElementById("btnCharge").classList.remove("active");
     });
-  });
+  }
 </script>
 </body>
 </html>

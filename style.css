@@ -563,3 +563,59 @@ footer {
 }
 
 .stock-current-card .big .u { font-size: 14px; color: var(--text-muted); margin-left: 6px; }
+
+/* ---------- Login gate ---------- */
+
+#loginGate {
+  min-height: 80vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 30px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+
+.login-card h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  margin: 0 0 6px;
+}
+
+.login-card p.sub {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0 0 22px;
+}
+
+.login-card .field { text-align: left; margin-bottom: 12px; }
+
+.login-error {
+  color: var(--bad);
+  font-size: 12.5px;
+  min-height: 16px;
+  margin: 6px 0 14px;
+}
+
+.login-card .btn { width: 100%; margin-top: 4px; }
+
+.btnLogout {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.btnLogout:hover { color: var(--bad); border-color: var(--bad); }
