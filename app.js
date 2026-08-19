@@ -525,15 +525,11 @@ function renderAll() {
   if (document.getElementById("panel-dashboard").classList.contains("active")) renderCharts();
 }
 
-async function startApp() {
+document.addEventListener("DOMContentLoaded", async () => {
   SETTINGS = loadSettings();
   document.querySelectorAll('input[name="date"]').forEach((el) => { el.value = todayISO(); });
   initTabs();
   initForms();
   initSettings();
   await reloadAll();
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  initAuthGate(startApp);
 });
