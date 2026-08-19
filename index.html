@@ -2,1769 +2,238 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Carnet de Pêche</title>
-<meta name="theme-color" content="#123D38">
-<link rel="manifest" href="./manifest.json">
-<link rel="icon" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carnet de bord — Poêle à granulés</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<style>
-  :root{
-    --teal-deep:#123D38;
-    --teal-mid:#1C5049;
-    --ink:#1C2B33;
-    --paper:#F3ECDA;
-    --paper-soft:#FBF7EC;
-    --brass:#B8834A;
-    --brass-dark:#93672F;
-    --rust:#A1462F;
-    --sage:#7FA396;
-    --line:rgba(28,43,51,0.14);
-    --shadow: 0 6px 18px rgba(18,61,56,0.14);
-    --radius: 14px;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0; overflow-x:hidden; max-width:100%;}
-  body{
-    background:
-      radial-gradient(1200px 600px at 50% -10%, #16473F 0%, var(--teal-deep) 55%) fixed;
-    font-family:'IBM Plex Sans', sans-serif;
-    color:var(--ink);
-    min-height:100vh;
-    -webkit-tap-highlight-color: transparent;
-  }
-  ::selection{background:var(--brass); color:var(--paper-soft);}
-  button{font-family:inherit;}
-  :focus-visible{outline:3px solid var(--brass); outline-offset:2px;}
-
-  .app{max-width:560px; margin:0 auto; padding-bottom:120px; width:100%; overflow-x:hidden;}
-
-  header.cover{
-    padding:22px 20px 18px;
-    color:var(--paper);
-    position:relative;
-    overflow:hidden;
-  }
-  header.cover::after{
-    content:"";
-    position:absolute; left:0; right:0; bottom:0;
-    height:14px;
-    background-image: repeating-linear-gradient(90deg, transparent 0 10px, rgba(0,0,0,0.18) 10px 11px);
-    opacity:.5;
-  }
-  .hamburger-btn{
-    position:absolute; top:20px; left:16px;
-    background:rgba(243,236,218,0.12);
-    border:1px solid rgba(243,236,218,0.28);
-    color:var(--paper);
-    width:40px; height:40px;
-    border-radius:11px;
-    font-size:17px;
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    z-index:5;
-  }
-  .map-btn{
-    position:absolute; top:20px; right:16px;
-    background:rgba(243,236,218,0.12);
-    border:1px solid rgba(243,236,218,0.28);
-    color:var(--paper);
-    width:40px; height:40px;
-    border-radius:11px;
-    font-size:17px;
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    z-index:5;
-  }
-  .hamburger-btn:hover{background:rgba(243,236,218,0.2);}
-  .cover-eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    font-size:11px;
-    color:var(--sage);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-  }
-  .cover-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--brass);}
-  h1.cover-title{
-    font-family:'Special Elite', 'IBM Plex Mono', monospace;
-    font-weight:400;
-    font-size:29px;
-    line-height:1.15;
-    margin:8px 0 14px;
-    letter-spacing:.01em;
-    text-align:center;
-  }
-
-  .tabs{display:flex; gap:8px; margin-top:4px;}
-  .tab-btn{
-    flex:1;
-    background:rgba(243,236,218,0.07);
-    border:1px solid rgba(243,236,218,0.2);
-    color:rgba(243,236,218,0.72);
-    padding:10px 10px;
-    border-radius:11px;
-    font-size:13.5px;
-    font-weight:600;
-    cursor:pointer;
-  }
-  .tab-btn.active{background:var(--brass); color:var(--paper-soft); border-color:var(--brass);}
-
-  .stats{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-    padding:16px 16px 18px;
-  }
-  .stats.four{
-    grid-template-columns:repeat(2,1fr);
-  }
-  .stat{
-    background:rgba(243,236,218,0.08);
-    border:1px solid rgba(243,236,218,0.16);
-    border-radius:12px;
-    padding:12px 10px;
-    color:var(--paper);
-    text-align:center;
-  }
-  .stat .num{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:20px;
-    font-weight:600;
-    color:var(--paper);
-    display:block;
-  }
-  .stat .lbl{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--sage); margin-top:2px; display:block;}
-
-  main{
-    background:var(--paper);
-    border-radius:22px 22px 0 0;
-    min-height:60vh;
-    padding:18px 16px 8px;
-    box-shadow: 0 -8px 24px rgba(0,0,0,0.18);
-  }
-
-  .toolbar{display:flex; gap:6px; margin-bottom:14px; max-width:100%;}
-  .search{
-    flex:1 1 auto;
-    min-width:0;
-    background:var(--paper-soft);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:10px 12px;
-    font-size:14px;
-    color:var(--ink);
-  }
-  select.filter{
-    flex:0 1 92px;
-    min-width:0;
-    background:var(--paper-soft);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:10px 6px;
-    font-size:12.5px;
-    color:var(--ink);
-  }
-  .sort-btn{
-    flex:0 0 auto;
-    background:var(--paper-soft);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:10px 10px;
-    font-size:12.5px;
-    cursor:pointer;
-    color:var(--ink);
-    white-space:nowrap;
-  }
-
-  .empty{
-    text-align:center;
-    padding:50px 20px;
-    color:#5b6a68;
-  }
-  .empty .big{font-size:38px; display:block; margin-bottom:10px;}
-  .empty p{margin:4px 0; font-size:14px;}
-  .empty .hint{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--brass-dark);}
-
-  .catch-card, .outing-card{
-    position:relative;
-    background:var(--paper-soft);
-    border:1px solid var(--line);
-    border-radius:2px;
-    margin-bottom:16px;
-    padding:16px 14px 14px;
-    box-shadow:var(--shadow);
-  }
-  .catch-top{display:flex; align-items:flex-start; gap:12px;}
-  .stamp{
-    flex-shrink:0;
-    width:46px;height:46px;
-    border-radius:50%;
-    border:2px dashed var(--brass);
-    display:flex;align-items:center;justify-content:center;
-    font-size:22px;
-    color:var(--brass-dark);
-    transform:rotate(-6deg);
-    background:var(--paper);
-    overflow:hidden;
-  }
-  .stamp img{width:100%; height:100%; object-fit:cover; border-radius:50%;}
-  .catch-info{flex:1; min-width:0;}
-  .catch-species{
-    font-family:'Special Elite', monospace;
-    font-size:18px;
-    margin:0 0 2px;
-    color:var(--teal-deep);
-  }
-  .catch-meta{
-    font-size:12.5px;
-    color:#5b6a68;
-    display:flex; flex-wrap:wrap; gap:6px 10px;
-    margin-top:2px;
-  }
-  .catch-meta span{white-space:nowrap;}
-  .catch-nums{
-    display:flex; gap:14px; flex-wrap:wrap;
-    margin-top:10px;
-    font-family:'IBM Plex Mono', monospace;
-  }
-  .catch-nums .n{font-size:15px; font-weight:600; color:var(--teal-deep);}
-  .catch-nums .l{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--brass-dark);}
-  .released-badge{
-    font-size:10.5px;
-    background:var(--sage);
-    color:var(--paper-soft);
-    padding:2px 8px;
-    border-radius:20px;
-    margin-left:6px;
-    white-space:nowrap;
-  }
-  .bredouille-badge{
-    font-size:10.5px;
-    background:var(--rust);
-    color:var(--paper-soft);
-    padding:2px 8px;
-    border-radius:20px;
-    margin-left:6px;
-    white-space:nowrap;
-  }
-  .catch-notes{
-    margin-top:10px;
-    padding-top:10px;
-    border-top:1px dashed var(--line);
-    font-size:13.5px;
-    color:var(--ink);
-    line-height:1.45;
-    white-space:pre-wrap;
-  }
-  .catch-photo{
-    width:100%;
-    max-height:220px;
-    object-fit:cover;
-    border-radius:10px;
-    margin-top:10px;
-    cursor:pointer;
-    display:block;
-  }
-  .catch-actions{
-    display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;
-  }
-  .icon-btn{
-    border:none;
-    background:transparent;
-    color:#5b6a68;
-    font-size:12.5px;
-    padding:6px 8px;
-    border-radius:8px;
-    cursor:pointer;
-    display:flex; align-items:center; gap:4px;
-    text-decoration:none;
-  }
-  .icon-btn:hover{background:var(--line);}
-  .icon-btn.danger{color:var(--rust);}
-
-  .outing-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
-  .outing-date{font-family:'Special Elite', monospace; font-size:18px; color:var(--teal-deep); margin:0;}
-  .outing-sub{font-size:12px; color:#5b6a68; margin-top:2px;}
-  .outing-stats-row{display:flex; gap:18px; flex-wrap:wrap; margin-top:12px; font-family:'IBM Plex Mono', monospace;}
-  .outing-breakdown{font-size:11.5px; color:#8a938f; margin-top:4px;}
-
-  .fab{
-    position:fixed;
-    left:50%;
-    transform:translateX(-50%);
-    bottom:calc(20px + env(safe-area-inset-bottom));
-    background:var(--brass);
-    color:var(--paper-soft);
-    border:none;
-    border-radius:34px;
-    padding:17px 30px;
-    font-size:16.5px;
-    font-weight:700;
-    display:flex; align-items:center; gap:10px;
-    box-shadow:0 10px 28px rgba(147,103,47,0.5);
-    cursor:pointer;
-    max-width:calc(100% - 32px);
-    z-index:40;
-  }
-  .fab:active{transform:translateX(-50%) translateY(1px);}
-
-  .overlay{
-    position:fixed; inset:0;
-    background:rgba(18,61,56,0.55);
-    display:none;
-    align-items:flex-end;
-    z-index:50;
-  }
-  .overlay.open{display:flex;}
-  .sheet{
-    background:var(--paper);
-    width:100%;
-    max-height:92vh;
-    overflow-y:auto;
-    border-radius:20px 20px 0 0;
-    padding:18px 18px calc(24px + env(safe-area-inset-bottom));
-    animation:slideup .22s ease-out;
-  }
-  @media (prefers-reduced-motion: reduce){ .sheet{animation:none;} }
-  @keyframes slideup{from{transform:translateY(16px); opacity:.4;} to{transform:translateY(0); opacity:1;}}
-  .sheet h2{
-    font-family:'Special Elite', monospace;
-    font-weight:400;
-    font-size:21px;
-    color:var(--teal-deep);
-    margin:2px 0 16px;
-  }
-  .field{margin-bottom:12px; position:relative;}
-  .field label{
-    display:block;
-    font-size:11.5px;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    color:var(--brass-dark);
-    margin-bottom:5px;
-    font-weight:600;
-  }
-  .field input, .field textarea, .field select{
-    width:100%;
-    padding:10px 11px;
-    border-radius:9px;
-    border:1px solid var(--line);
-    background:var(--paper-soft);
-    font-size:15px;
-    color:var(--ink);
-    font-family:inherit;
-  }
-  .field textarea{min-height:70px; resize:vertical;}
-  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .check-field{display:flex; align-items:center; gap:8px; margin:6px 0 16px;}
-  .check-field input{width:auto;}
-  .check-field label{margin:0; text-transform:none; font-size:14px; color:var(--ink); font-weight:400;}
-  .field-hint{font-size:11.5px; color:#8a938f; margin-top:4px;}
-
-  .technique-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
-  .tech-check{
-    display:flex; align-items:center; gap:5px;
-    font-size:13.5px; font-weight:600; color:var(--brass-dark);
-    text-transform:none; white-space:nowrap; cursor:pointer;
-  }
-  .tech-check input{width:auto;}
-  .technique-row input[type="text"]{flex:1 1 140px; min-width:0;}
-
-  .sheet-actions{display:flex; gap:10px; margin-top:6px;}
-  .btn{
-    flex:1;
-    padding:12px;
-    border-radius:10px;
-    border:none;
-    font-weight:600;
-    font-size:14.5px;
-    cursor:pointer;
-  }
-  .btn.primary{background:var(--teal-deep); color:var(--paper-soft);}
-  .btn.ghost{background:transparent; color:#5b6a68; border:1px solid var(--line);}
-
-  .species-picker{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;}
-  .species-picker button{
-    border:1px solid var(--line);
-    background:var(--paper-soft);
-    border-radius:20px;
-    padding:6px 11px;
-    font-size:18px;
-    cursor:pointer;
-  }
-  .species-picker button.active{border-color:var(--brass); background:#F0E1CC;}
-
-  .combobox-wrap{position:relative;}
-  .suggestions{
-    position:absolute; top:100%; left:0; right:0;
-    background:var(--paper-soft);
-    border:1px solid var(--line);
-    border-top:none;
-    border-radius:0 0 10px 10px;
-    max-height:190px;
-    overflow-y:auto;
-    z-index:20;
-    box-shadow:var(--shadow);
-    display:none;
-  }
-  .suggestions.open{display:block;}
-  .suggestions button{
-    display:block; width:100%; text-align:left;
-    padding:9px 12px; border:none; background:none;
-    font-size:14.5px; color:var(--ink); cursor:pointer;
-  }
-  .suggestions button:hover, .suggestions button:focus{background:var(--line);}
-  .suggestions .none{padding:9px 12px; font-size:13px; color:#8a938f;}
-
-  .photo-field{margin-bottom:14px;}
-  .photo-btns{display:flex; gap:8px;}
-  .photo-btns label{
-    flex:1;
-    text-align:center;
-    padding:11px;
-    border:1px dashed var(--brass);
-    border-radius:10px;
-    font-size:13.5px;
-    color:var(--brass-dark);
-    cursor:pointer;
-    font-weight:600;
-  }
-  .photo-btns input{display:none;}
-  .photo-preview-wrap{position:relative; margin-top:10px;}
-  .photo-preview{width:100%; max-height:200px; object-fit:cover; border-radius:10px; display:block;}
-  .photo-remove{
-    position:absolute; top:8px; right:8px;
-    background:rgba(18,43,39,0.75); color:#fff;
-    border:none; border-radius:50%; width:28px; height:28px;
-    font-size:15px; cursor:pointer;
-  }
-
-  .gps-row{display:flex; align-items:center; gap:8px;}
-  .gps-btn{
-    background:var(--teal-deep); color:var(--paper-soft);
-    border:none; border-radius:9px; padding:10px 12px;
-    font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
-  }
-  .gps-status{font-size:12.5px; color:#5b6a68; flex:1;}
-  .gps-clear{background:none; border:none; color:var(--rust); font-size:12px; cursor:pointer; text-decoration:underline; padding:4px;}
-
-  .menu-options{display:flex; flex-direction:column; gap:10px;}
-  .menu-option{
-    display:flex; align-items:center; gap:12px;
-    padding:14px; border:1px solid var(--line); border-radius:12px;
-    background:var(--paper-soft); font-size:15px; color:var(--ink);
-    cursor:pointer; text-align:left; width:100%;
-  }
-  .menu-option:hover{background:var(--line);}
-  .menu-option .ic{font-size:19px;}
-
-  .toast{
-    position:fixed; left:50%; bottom:100px; transform:translateX(-50%);
-    background:var(--ink); color:var(--paper-soft);
-    padding:10px 16px; border-radius:20px; font-size:13px;
-    opacity:0; pointer-events:none; transition:opacity .25s;
-    z-index:80;
-  }
-  .toast.show{opacity:1;}
-
-  #list{ animation: tabFade .22s ease; }
-  @keyframes tabFade{ from{opacity:0; transform:translateX(10px);} to{opacity:1; transform:translateX(0);} }
-  @media (prefers-reduced-motion: reduce){ #list{ animation:none; } }
-
-  .map-overlay{
-    position:fixed; inset:0; z-index:60;
-    background:var(--paper);
-    display:none;
-    flex-direction:column;
-  }
-  .map-overlay.open{display:flex;}
-  .map-header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:14px 16px; background:var(--teal-deep); color:var(--paper);
-    flex-shrink:0;
-  }
-  .map-header h2{
-    font-family:'Special Elite', monospace; font-weight:400; font-size:18px; margin:0;
-  }
-  .map-close{
-    background:rgba(243,236,218,0.14); border:1px solid rgba(243,236,218,0.28);
-    color:var(--paper); width:34px; height:34px; border-radius:9px;
-    font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
-  }
-  #mapContainer{flex:1; width:100%;}
-  .map-offline{
-    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:30px; text-align:center; color:#5b6a68;
-  }
-  .map-offline .big{font-size:38px; display:block; margin-bottom:12px;}
-  .leaflet-popup-content{ font-family:'IBM Plex Sans', sans-serif; }
-  .popup-species{ font-family:'Special Elite', monospace; font-size:15px; color:var(--teal-deep); margin:0 0 4px; }
-  .popup-meta{ font-size:12px; color:#5b6a68; margin:0 0 6px; }
-  .popup-photo{ width:100%; max-height:110px; object-fit:cover; border-radius:6px; margin-bottom:6px; }
-  .popup-link{ display:inline-block; font-size:12.5px; color:var(--brass-dark); font-weight:600; text-decoration:underline; cursor:pointer; }
-
-  .lightbox{
-    position:fixed; inset:0; background:rgba(10,16,15,0.9);
-    display:none; align-items:center; justify-content:center;
-    z-index:90; padding:20px;
-  }
-  .lightbox.open{display:flex;}
-  .lightbox img{max-width:100%; max-height:85vh; border-radius:8px;}
-  .lightbox-close{
-    position:absolute; top:18px; right:18px;
-    background:rgba(255,255,255,0.12); border:none; color:#fff;
-    font-size:22px; width:38px; height:38px; border-radius:50%; cursor:pointer;
-  }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="app">
-  <header class="cover">
-    <button class="hamburger-btn" id="menuBtn" aria-label="Options">☰</button>
-    <button class="map-btn" id="mapBtn" aria-label="Carte des prises">🗺️</button>
-    <div class="cover-eyebrow"><span class="dot"></span> Journal personnel</div>
-    <h1 class="cover-title">Carnet de Pêche</h1>
-    <div class="tabs">
-      <button class="tab-btn active" id="tabPrises" data-tab="prises">🎣 Prises</button>
-      <button class="tab-btn" id="tabSorties" data-tab="sorties">🚣 Sorties</button>
+<div id="loginGate">
+  <div class="login-card">
+    <h2>🔥 Carnet du poêle</h2>
+    <p class="sub">Accès réservé au foyer — connecte-toi avec le mot de passe partagé.</p>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input type="email" name="email" required autocomplete="username"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <div class="login-error" id="loginError"></div>
+      <button class="btn" type="submit">Se connecter</button>
+    </form>
+  </div>
+</div>
+
+<div class="wrap" id="appRoot" style="display:none;">
+
+  <header class="hero">
+    <div class="hero-title-block">
+      <h1>Carnet de bord <span>du poêle</span></h1>
+      <p>Suivi des sessions de chauffe, des achats et du stock de granulés.</p>
+      <p id="syncStatus" style="font-size:11.5px; color:var(--text-muted); margin-top:6px;"></p>
+    </div>
+
+    <div class="gauge-card">
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 100 100" width="96" height="96">
+          <circle class="gauge-track" cx="50" cy="50" r="40"></circle>
+          <circle id="gaugeFill" class="gauge-fill" cx="50" cy="50" r="40"></circle>
+        </svg>
+        <div class="gauge-center">
+          <div class="num" id="gaugeNum">—</div>
+          <div class="unit">sacs</div>
+        </div>
+      </div>
+      <div class="gauge-meta">
+        <div class="label">Autonomie estimée</div>
+        <div class="value" id="autonomyValue">—</div>
+        <div class="label" style="margin-top:8px;">Dernier relevé</div>
+        <div class="value" id="stockDate">—</div>
+        <button class="btnLogout" style="margin-top:12px;">Se déconnecter</button>
+      </div>
     </div>
   </header>
 
-  <div class="stats" id="stats"></div>
+  <nav class="tabs">
+    <button class="active" data-target="panel-dashboard">Tableau de bord</button>
+    <button data-target="panel-sessions">Sessions</button>
+    <button data-target="panel-achats">Achats &amp; stock</button>
+    <button data-target="panel-settings">Réglages</button>
+  </nav>
 
-  <main>
-    <div class="toolbar" id="toolbarPrises">
-      <input class="search" id="search" type="text" placeholder="Rechercher (lieu, espèce, notes)…">
-      <select class="filter" id="filterEspece"><option value="">Toutes espèces</option></select>
-      <button type="button" class="sort-btn" id="sortBtn">⇅ Date</button>
+  <!-- ============ DASHBOARD ============ -->
+  <section class="panel active" id="panel-dashboard">
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="chart-grid">
+      <div class="card"><h3>Stock de granulés dans le temps</h3><canvas id="chartStock"></canvas></div>
+      <div class="card"><h3>Nombre de sessions par mois</h3><canvas id="chartSessions"></canvas></div>
+      <div class="card"><h3>Température ambiante moyenne</h3><canvas id="chartTemp"></canvas></div>
+      <div class="card"><h3>Coût par mois</h3><canvas id="chartCout"></canvas></div>
+      <div class="card"><h3>Sacs consommés par mois</h3><canvas id="chartSacsConso"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ============ SESSIONS ============ -->
+  <section class="panel" id="panel-sessions">
+
+    <div class="form-card">
+      <h3>Ajouter une session</h3>
+      <form id="formSession">
+
+        <div class="field-group-title">Horaires</div>
+        <div class="form-grid">
+          <div class="field"><label>Date</label><input type="date" name="date" required></div>
+          <div class="field"><label>Heure allumage</label><input type="time" name="allumage"></div>
+          <div class="field"><label>Heure arrêt</label><input type="time" name="arret"></div>
+          <div class="field"><label>Durée (calculée)</label><div class="duree-display" id="dureeDisplay">renseigne l'allumage et l'arrêt</div></div>
+        </div>
+
+        <div class="field-group-title">Réglages</div>
+        <div class="form-grid">
+          <div class="field"><label>Puissance</label><input type="number" step="1" name="puissance"></div>
+          <div class="field"><label>Temp. demandée (°C)</label><input type="number" step="0.1" name="temp_demandee"></div>
+        </div>
+
+        <div class="field-group-title">Températures ambiantes</div>
+        <div class="form-grid">
+          <div class="field"><label>Bas / général</label><input type="number" step="0.1" name="temp_ambiante_bas"></div>
+          <div class="field"><label>Chambre O</label><input type="number" step="0.1" name="temp_ambiante_o"></div>
+          <div class="field"><label>Chambre Z</label><input type="number" step="0.1" name="temp_ambiante_z"></div>
+          <div class="field"><label>Chambre N</label><input type="number" step="0.1" name="temp_ambiante_n"></div>
+        </div>
+
+        <div class="field-group-title">Températures à l'arrêt du poêle</div>
+        <div class="form-grid">
+          <div class="field"><label>Bas / général</label><input type="number" step="0.1" name="temp_arret_bas"></div>
+          <div class="field"><label>Chambre O</label><input type="number" step="0.1" name="temp_arret_o"></div>
+          <div class="field"><label>Chambre Z</label><input type="number" step="0.1" name="temp_arret_z"></div>
+          <div class="field"><label>Chambre N</label><input type="number" step="0.1" name="temp_arret_n"></div>
+        </div>
+
+        <div class="field-group-title">Actions</div>
+        <div class="toggle-row">
+          <button type="button" class="toggle-btn" id="btnNettoyage" data-role="nettoyage">🧹 Nettoyage</button>
+          <button type="button" class="toggle-btn" id="btnCharge" data-role="charge">🔄 Charge granulés</button>
+        </div>
+
+        <div class="field" style="margin-bottom:14px;"><label>Commentaires</label><textarea name="commentaires" placeholder="Notes libres sur la session…"></textarea></div>
+        <button class="btn" type="submit">+ Ajouter la session</button>
+      </form>
     </div>
 
-    <div id="list"></div>
-  </main>
-</div>
-
-<button class="fab" id="openAdd">🎣 <span id="fabLabel">Nouvelle prise</span></button>
-
-<!-- Carte des prises géolocalisées -->
-<div class="map-overlay" id="mapOverlay">
-  <div class="map-header">
-    <h2>Carte des prises</h2>
-    <button class="map-close" id="mapCloseBtn" aria-label="Fermer">✕</button>
-  </div>
-  <div id="mapContainer"></div>
-  <div class="map-offline" id="mapOffline" style="display:none;">
-    <span class="big">📡</span>
-    <p>La carte a besoin d'une connexion internet pour s'afficher.</p>
-    <p class="hint" style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--brass-dark);">Tes points GPS restent enregistrés — reconnecte-toi pour les voir sur la carte.</p>
-  </div>
-</div>
-
-<!-- Menu options (hamburger) -->
-<div class="overlay" id="menuOverlay">
-  <div class="sheet">
-    <h2>Options</h2>
-    <div class="menu-options">
-      <button type="button" class="menu-option" id="menuExport"><span class="ic">⬇️</span> Exporter mes données</button>
-      <button type="button" class="menu-option" id="menuImport"><span class="ic">⬆️</span> Importer des données</button>
-      <button type="button" class="menu-option" id="menuLogout"><span class="ic">🚪</span> Se déconnecter</button>
+    <div class="table-toolbar">
+      <h3 style="margin:0;">Historique des sessions</h3>
+      <input type="search" id="searchSessions" placeholder="Rechercher (date, commentaire…)">
     </div>
-    <div class="sheet-actions" style="margin-top:16px;">
-      <button type="button" class="btn ghost" id="menuClose">Fermer</button>
-    </div>
-  </div>
-</div>
+    <div class="session-list" id="sessionList"></div>
+    <div class="empty-state" id="sessionsEmpty" style="display:none;">Aucune session pour l'instant — ajoute la première ci-dessus.</div>
+  </section>
 
-<!-- Formulaire Prise -->
-<div class="overlay" id="overlay">
-  <div class="sheet">
-    <h2 id="formTitle">Nouvelle prise</h2>
-    <form id="catchForm">
-      <input type="hidden" id="editId">
+  <!-- ============ ACHATS & STOCK ============ -->
+  <section class="panel" id="panel-achats">
 
-      <div class="field">
-        <label>Espèce</label>
-        <div class="species-picker" id="speciesPicker"></div>
-        <div class="combobox-wrap">
-          <input id="espece" type="text" placeholder="Tape les premières lettres…" autocomplete="off" required>
-          <div class="suggestions" id="especeSuggestions"></div>
-        </div>
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <label>Date</label>
-          <input id="date" type="date" required>
-        </div>
-        <div class="field">
-          <label>Heure</label>
-          <input id="heure" type="time">
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Lieu</label>
-        <input id="lieu" type="text" placeholder="Ex : Lac de Vassivière, Seine…">
-      </div>
-
-      <div class="field">
-        <label>Position GPS</label>
-        <div class="gps-row">
-          <button type="button" class="gps-btn" id="gpsBtn">📍 Me localiser</button>
-          <span class="gps-status" id="gpsStatus">Aucune position enregistrée.</span>
-        </div>
-        <button type="button" class="gps-clear" id="gpsClear" style="display:none;">Effacer la position</button>
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <label>Taille (cm)</label>
-          <input id="taille" type="number" step="0.5" min="0" placeholder="0">
-        </div>
-        <div class="field">
-          <label>Météo</label>
-          <select id="meteo">
-            <option value="☀️ Soleil">☀️ Soleil</option>
-            <option value="⛅ Nuageux">⛅ Nuageux</option>
-            <option value="🌧️ Pluie">🌧️ Pluie</option>
-            <option value="💨 Vent">💨 Vent</option>
-            <option value="🌫️ Brouillard">🌫️ Brouillard</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Technique / appât</label>
-        <div class="technique-row">
-          <label class="tech-check"><input type="checkbox" id="techMouche"> Mouche</label>
-          <label class="tech-check"><input type="checkbox" id="techLeurre"> Leurre</label>
-          <input id="techniqueLibre" type="text" placeholder="Autre / précisions…">
-        </div>
-      </div>
-
-      <div class="field photo-field">
-        <label>Photo</label>
-        <div class="photo-btns">
-          <label for="photoCamera">📷 Prendre une photo</label>
-          <input type="file" id="photoCamera" accept="image/*" capture="environment">
-          <label for="photoGallery">🖼️ Depuis la galerie</label>
-          <input type="file" id="photoGallery" accept="image/*">
-        </div>
-        <div class="photo-preview-wrap" id="photoPreviewWrap" style="display:none;">
-          <img class="photo-preview" id="photoPreview" alt="Aperçu de la prise">
-          <button type="button" class="photo-remove" id="photoRemove">✕</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Notes</label>
-        <textarea id="notes" placeholder="Conditions, ressenti, coin exact, ce qui a marché…"></textarea>
-      </div>
-
-      <div class="sheet-actions">
-        <button type="button" class="btn ghost" id="cancelBtn">Annuler</button>
-        <button type="submit" class="btn primary" id="saveBtn">Enregistrer</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Formulaire Sortie -->
-<div class="overlay" id="outingOverlay">
-  <div class="sheet">
-    <h2 id="outingFormTitle">Nouvelle sortie</h2>
-    <form id="outingForm">
-      <input type="hidden" id="outingEditId">
-
-      <div class="row2">
-        <div class="field">
-          <label>Date</label>
-          <input id="outingDate" type="date" required>
-        </div>
-        <div class="field">
-          <label>Heures pêchées</label>
-          <input id="outingHeures" type="number" step="0.5" min="0" placeholder="Ex : 3.5">
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Poissons non enregistrés dans "Prises"</label>
-        <input id="outingLibre" type="number" step="1" min="0" placeholder="0">
-        <p class="field-hint">Compte ici les poissons attrapés mais pas détaillés en fiche individuelle. Les prises déjà enregistrées ce jour-là seront ajoutées automatiquement au total.</p>
-      </div>
-
-      <div class="check-field">
-        <input type="checkbox" id="outingBredouille">
-        <label for="outingBredouille">Bredouille (aucun poisson)</label>
-      </div>
-
-      <div class="field">
-        <label>Notes</label>
-        <textarea id="outingNotes" placeholder="Conditions, spot, ressenti général de la sortie…"></textarea>
-      </div>
-
-      <div class="sheet-actions">
-        <button type="button" class="btn ghost" id="outingCancelBtn">Annuler</button>
-        <button type="submit" class="btn primary">Enregistrer</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="lightbox" id="lightbox">
-  <button class="lightbox-close" id="lightboxClose">✕</button>
-  <img id="lightboxImg" alt="Photo de la prise en grand">
-</div>
-
-<div class="overlay open" id="authOverlay">
-  <div class="sheet">
-    <h2>Connexion</h2>
-    <form id="authForm">
-      <div class="field">
-        <label>Email</label>
-        <input id="authEmail" type="email" required autocomplete="username">
-      </div>
-      <div class="field">
-        <label>Mot de passe</label>
-        <input id="authPassword" type="password" required autocomplete="current-password">
-      </div>
-      <p id="authError" style="color:var(--rust); font-size:13px; min-height:18px; margin:0 0 8px;"></p>
-      <div class="sheet-actions">
-        <button type="submit" class="btn primary" id="authSubmitBtn" style="flex:1;">Se connecter</button>
-      </div>
-    </form>
-    <p class="field-hint" style="margin-top:14px;">Utilise le compte créé dans Supabase (Authentication → Users) pour synchroniser ton carnet en ligne.</p>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-const CATCH_STORAGE_KEY = "carnet-peche-catches-v1";
-const OUTING_STORAGE_KEY = "carnet-peche-outings-v1";
-
-const QUICK_SPECIES = ["🐟 Chevesne","🐊 Brochet","🐠 Perche","🐟 Truite","🐟 Black-bass","🐡 Carpe","🦈 Silure"];
-
-const SPECIES_LIST = [
-  "Ablette","Anguille","Bar","Barbeau","Black-bass","Bonite","Bordelière","Brème","Brème bordelière",
-  "Brochet","Carassin","Carpe amour","Carpe commune","Carpe cuir","Carpe miroir","Chabot","Chevesne",
-  "Congre","Dorade grise","Dorade royale","Gardon","Goujon","Grondin","Hotu","Ide mélanote","Lieu jaune",
-  "Lieu noir","Lotte","Loup (bar)","Maquereau","Merlan","Mulet","Ombre commun","Omble chevalier","Pageot",
-  "Perche","Perche soleil","Pollack","Raie","Rotengle","Saumon atlantique","Sandre","Sar","Silure glane",
-  "Sole","Tacaud","Tanche","Thon rouge","Truite arc-en-ciel","Truite de mer","Truite fario","Turbot",
-  "Vairon","Vandoise","Vieille"
-];
-
-const SPECIES_EMOJI = {
-  "truite":"🐟","saumon":"🐟","omble":"🐟","ombre":"🐟",
-  "brochet":"🐊","sandre":"🎣","perche":"🐠","carpe":"🐡",
-  "silure":"🦈","black-bass":"🐟","bar":"🐟","loup":"🐟",
-  "dorade":"🐟","maquereau":"🐟","thon":"🐟","sole":"🐟","turbot":"🐟",
-  "anguille":"🐍","raie":"🦈","congre":"🐍"
-};
-
-let catches = [];
-let outings = [];
-let activeTab = "prises";
-let editingId = null;
-let outingEditingId = null;
-let sortMode = "date";
-let currentPhotoData = null;
-let currentCoords = null;
-let photoChanged = false;
-
-// ---------- Supabase ----------
-const SUPABASE_URL = "https://jdnjuswupkrfxtlrsmah.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impkbmp1c3d1cGtyZnh0bHJzbWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMDAxNDUsImV4cCI6MjEwMTg3NjE0NX0.A4QS-86-ovu1lWBNScQ4eA0nW0tsALwJG2a1myHLPpA";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const PENDING_KEY = "carnet-peche-pending-ops";
-let currentUser = null;
-
-function loadData(){
-  try{ catches = JSON.parse(localStorage.getItem(CATCH_STORAGE_KEY)) || []; }catch(e){ catches = []; }
-  try{ outings = JSON.parse(localStorage.getItem(OUTING_STORAGE_KEY)) || []; }catch(e){ outings = []; }
-}
-function saveCatches(){
-  try{ localStorage.setItem(CATCH_STORAGE_KEY, JSON.stringify(catches)); }
-  catch(e){ showToast("Stockage plein — exporte puis supprime d'anciennes photos"); }
-}
-function saveOutings(){
-  localStorage.setItem(OUTING_STORAGE_KEY, JSON.stringify(outings));
-}
-
-// ---------- Auth ----------
-function showAuthOverlay(){ document.getElementById("authOverlay").classList.add("open"); }
-function hideAuthOverlay(){ document.getElementById("authOverlay").classList.remove("open"); }
-
-async function initAuth(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(session){
-    currentUser = session.user;
-    hideAuthOverlay();
-    syncFromCloud();
-  }else{
-    showAuthOverlay();
-  }
-}
-sb.auth.onAuthStateChange((event, session)=>{
-  if(session){
-    currentUser = session.user;
-    hideAuthOverlay();
-    document.getElementById("authForm").reset();
-    syncFromCloud();
-  }else{
-    currentUser = null;
-    showAuthOverlay();
-  }
-});
-
-document.getElementById("authForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const btn = document.getElementById("authSubmitBtn");
-  const errEl = document.getElementById("authError");
-  errEl.textContent = "";
-  btn.disabled = true;
-  btn.textContent = "Connexion…";
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false;
-  btn.textContent = "Se connecter";
-  if(error) errEl.textContent = "Connexion impossible : " + error.message;
-});
-
-document.getElementById("menuLogout").addEventListener("click", async ()=>{
-  document.getElementById("menuOverlay").classList.remove("open");
-  await sb.auth.signOut();
-});
-
-// ---------- Mapping local <-> Supabase ----------
-function toDbCatch(c){
-  return {
-    id: c.id,
-    user_id: currentUser.id,
-    espece: c.espece || null,
-    date: c.date || null,
-    heure: c.heure || null,
-    lieu: c.lieu || null,
-    taille: c.taille ? parseFloat(c.taille) : null,
-    meteo: c.meteo || null,
-    tech_mouche: !!c.techMouche,
-    tech_leurre: !!c.techLeurre,
-    technique_libre: c.techniqueLibre || null,
-    technique: c.technique || null,
-    notes: c.notes || null,
-    photo_url: c.photoPath || null,
-    lat: c.lat != null ? c.lat : null,
-    lng: c.lng != null ? c.lng : null
-  };
-}
-function fromDbCatch(row){
-  return {
-    id: row.id,
-    espece: row.espece || "",
-    date: row.date || "",
-    heure: row.heure || "",
-    lieu: row.lieu || "",
-    taille: row.taille != null ? String(row.taille) : "",
-    meteo: row.meteo || "",
-    techMouche: !!row.tech_mouche,
-    techLeurre: !!row.tech_leurre,
-    techniqueLibre: row.technique_libre || "",
-    technique: row.technique || "",
-    notes: row.notes || "",
-    photo: null,
-    photoPath: row.photo_url || null,
-    lat: row.lat,
-    lng: row.lng
-  };
-}
-function toDbOuting(o){
-  return {
-    id: o.id,
-    user_id: currentUser.id,
-    date: o.date || null,
-    heures: o.heures ? parseFloat(o.heures) : null,
-    libre: o.libre ? parseInt(o.libre) : 0,
-    bredouille: !!o.bredouille,
-    notes: o.notes || null
-  };
-}
-function fromDbOuting(row){
-  return {
-    id: row.id,
-    date: row.date || "",
-    heures: row.heures != null ? String(row.heures) : "",
-    libre: row.libre || 0,
-    bredouille: !!row.bredouille,
-    notes: row.notes || ""
-  };
-}
-
-// ---------- Synchronisation ----------
-async function syncFromCloud(){
-  try{
-    const [{ data: catchRows, error: err1 }, { data: outingRows, error: err2 }] = await Promise.all([
-      sb.from("catches").select("*"),
-      sb.from("outings").select("*")
-    ]);
-    if(err1) throw err1;
-    if(err2) throw err2;
-
-    const localPhotos = {};
-    catches.forEach(c=>{ if(c.photo) localPhotos[c.id] = c.photo; });
-
-    catches = (catchRows||[]).map(row=>{
-      const c = fromDbCatch(row);
-      c.photo = localPhotos[c.id] || null;
-      return c;
-    });
-    outings = (outingRows||[]).map(fromDbOuting);
-
-    saveCatches();
-    saveOutings();
-    renderAll();
-
-    restoreMissingPhotos();
-    flushPendingOps();
-  }catch(err){
-    console.warn("Synchronisation impossible (hors-ligne ?)", err);
-  }
-}
-
-function blobToBase64(blob){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = ()=>resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function restoreMissingPhotos(){
-  const toRestore = catches.filter(c => !c.photo && c.photoPath);
-  let changed = false;
-  for(const c of toRestore){
-    try{
-      const { data, error } = await sb.storage.from("catch-photos").createSignedUrl(c.photoPath, 3600);
-      if(error || !data) continue;
-      const resp = await fetch(data.signedUrl);
-      const blob = await resp.blob();
-      c.photo = await blobToBase64(blob);
-      changed = true;
-    }catch(e){ /* on retentera à la prochaine sync */ }
-  }
-  if(changed){
-    saveCatches();
-    renderAll();
-  }
-}
-
-async function uploadPhoto(catchId, base64){
-  if(!currentUser) return null;
-  try{
-    const blob = await (await fetch(base64)).blob();
-    const path = `${currentUser.id}/${catchId}.jpg`;
-    const { error } = await sb.storage.from("catch-photos").upload(path, blob, { upsert:true, contentType:"image/jpeg" });
-    if(error){ console.warn("Upload photo échoué", error); return null; }
-    return path;
-  }catch(e){ return null; }
-}
-async function deletePhotoFromStorage(path){
-  try{ await sb.storage.from("catch-photos").remove([path]); }catch(e){}
-}
-
-// ---------- File d'attente hors-ligne ----------
-function loadPending(){
-  try{ return JSON.parse(localStorage.getItem(PENDING_KEY)) || []; }catch(e){ return []; }
-}
-function savePending(list){ localStorage.setItem(PENDING_KEY, JSON.stringify(list)); }
-function queuePending(op){
-  const list = loadPending().filter(o => !(o.table===op.table && o.id===op.id));
-  list.push(op);
-  savePending(list);
-}
-async function flushPendingOps(){
-  if(!currentUser || !navigator.onLine) return;
-  const list = loadPending();
-  if(list.length === 0) return;
-  const remaining = [];
-  for(const op of list){
-    try{
-      if(op.action === "delete"){
-        const { error } = await sb.from(op.table).delete().eq("id", op.id);
-        if(error) throw error;
-      }else{
-        const { error } = await sb.from(op.table).upsert(op.payload);
-        if(error) throw error;
-        if(op.table === "catches" && op.needsPhotoUpload && op.photoBase64){
-          const path = await uploadPhoto(op.id, op.photoBase64);
-          if(path){
-            await sb.from("catches").update({ photo_url: path }).eq("id", op.id);
-            const c = catches.find(x=>x.id===op.id);
-            if(c){ c.photoPath = path; saveCatches(); }
-          }
-        }
-      }
-    }catch(e){
-      remaining.push(op);
-    }
-  }
-  savePending(remaining);
-  if(list.length > 0 && remaining.length === 0) showToast("Synchronisé avec le cloud ✓");
-}
-window.addEventListener("online", flushPendingOps);
-
-function uid(){
-  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
-    const r = Math.random()*16|0, v = c==="x" ? r : (r&0x3|0x8);
-    return v.toString(16);
-  });
-}
-
-function speciesEmoji(name){
-  const key = (name||"").toLowerCase();
-  const found = Object.keys(SPECIES_EMOJI).find(k => key.includes(k));
-  return found ? SPECIES_EMOJI[found] : "🐟";
-}
-
-function fmtDate(iso){
-  if(!iso) return "";
-  const d = new Date(iso+"T00:00:00");
-  return d.toLocaleDateString("fr-FR", {day:"2-digit", month:"short", year:"numeric"});
-}
-
-// ---------- Tabs ----------
-function switchTab(tab){
-  if(tab === activeTab) return;
-  activeTab = tab;
-  document.getElementById("tabPrises").classList.toggle("active", tab==="prises");
-  document.getElementById("tabSorties").classList.toggle("active", tab==="sorties");
-  document.getElementById("toolbarPrises").style.display = tab==="prises" ? "flex" : "none";
-  document.getElementById("fabLabel").textContent = tab==="prises" ? "Nouvelle prise" : "Nouvelle sortie";
-  document.getElementById("openAdd").firstChild.textContent = tab==="prises" ? "🎣 " : "🚣 ";
-  renderAll();
-  const list = document.getElementById("list");
-  list.style.animation = "none";
-  requestAnimationFrame(()=>{ list.style.animation = "tabFade .22s ease"; });
-}
-document.getElementById("tabPrises").addEventListener("click", ()=>switchTab("prises"));
-document.getElementById("tabSorties").addEventListener("click", ()=>switchTab("sorties"));
-
-// ---------- Swipe entre onglets ----------
-let swipeStartX = null, swipeStartY = null;
-const swipeZone = document.querySelector("main");
-swipeZone.addEventListener("touchstart", (e)=>{
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
-}, {passive:true});
-swipeZone.addEventListener("touchend", (e)=>{
-  if(swipeStartX === null) return;
-  const dx = e.changedTouches[0].clientX - swipeStartX;
-  const dy = e.changedTouches[0].clientY - swipeStartY;
-  if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5){
-    if(dx < 0 && activeTab === "prises") switchTab("sorties");
-    if(dx > 0 && activeTab === "sorties") switchTab("prises");
-  }
-  swipeStartX = null; swipeStartY = null;
-}, {passive:true});
-
-// ---------- Stats ----------
-function renderStats(){
-  const el = document.getElementById("stats");
-  if(activeTab === "prises"){
-    el.classList.remove("four");
-    const total = catches.length;
-    let biggest = null;
-    const speciesCount = {};
-    catches.forEach(c=>{
-      if(c.taille && (!biggest || parseFloat(c.taille) > parseFloat(biggest.taille))) biggest = c;
-      const key = c.espece.trim().toLowerCase();
-      speciesCount[key] = (speciesCount[key]||0)+1;
-    });
-    let favSpecies = "—", favCount = 0;
-    Object.entries(speciesCount).forEach(([k,v])=>{ if(v>favCount){favCount=v; favSpecies=k;} });
-    el.innerHTML = `
-      <div class="stat"><span class="num">${total}</span><span class="lbl">Prises</span></div>
-      <div class="stat"><span class="num">${biggest ? parseFloat(biggest.taille)+"cm" : "—"}</span><span class="lbl">Record</span></div>
-      <div class="stat"><span class="num" style="font-size:14px; text-transform:capitalize;">${favSpecies}</span><span class="lbl">Espèce fétiche</span></div>
-    `;
-  }else{
-    el.classList.add("four");
-    const totalOutings = outings.length;
-    const totalHeures = outings.reduce((s,o)=> s + (parseFloat(o.heures)||0), 0);
-    const bredouilleCount = outings.filter(o=>o.bredouille).length;
-    const totalPoissons = outings.reduce((s,o)=> s + catchesForDate(o.date) + (parseInt(o.libre)||0), 0);
-    el.innerHTML = `
-      <div class="stat"><span class="num">${totalOutings}</span><span class="lbl">Sorties</span></div>
-      <div class="stat"><span class="num">${totalHeures.toFixed(1)}h</span><span class="lbl">Cumulées</span></div>
-      <div class="stat"><span class="num">${totalPoissons}</span><span class="lbl">Poissons total</span></div>
-      <div class="stat"><span class="num">${bredouilleCount}</span><span class="lbl">Bredouilles</span></div>
-    `;
-  }
-}
-
-function renderFilterOptions(){
-  const sel = document.getElementById("filterEspece");
-  const current = sel.value;
-  const uniqueSpecies = [...new Set(catches.map(c=>c.espece.trim()))].sort((a,b)=>a.localeCompare(b));
-  sel.innerHTML = `<option value="">Toutes espèces</option>` + uniqueSpecies.map(s=>`<option value="${s}">${s}</option>`).join("");
-  sel.value = current;
-}
-
-// ---------- Liste : Prises ----------
-function renderCatchList(){
-  const list = document.getElementById("list");
-  const q = document.getElementById("search").value.trim().toLowerCase();
-  const filterEspece = document.getElementById("filterEspece").value;
-
-  let filtered = catches.filter(c=>{
-    const matchQ = !q || (c.espece+" "+c.lieu+" "+c.notes).toLowerCase().includes(q);
-    const matchEspece = !filterEspece || c.espece === filterEspece;
-    return matchQ && matchEspece;
-  });
-
-  filtered.sort((a,b)=>{
-    if(sortMode === "taille") return (parseFloat(b.taille)||0) - (parseFloat(a.taille)||0);
-    return (b.date+b.heure).localeCompare(a.date+a.heure);
-  });
-
-  if(filtered.length === 0){
-    list.innerHTML = `
-      <div class="empty">
-        <span class="big">🎣</span>
-        <p>Aucune prise enregistrée pour l'instant.</p>
-        <p class="hint">Touchez "Nouvelle prise" pour ouvrir votre premier carnet de bord.</p>
-      </div>`;
-    return;
-  }
-
-  list.innerHTML = filtered.map(c => `
-    <div class="catch-card" data-id="${c.id}">
-      <div class="catch-top">
-        <div class="stamp">${c.photo ? `<img src="${c.photo}" alt="">` : speciesEmoji(c.espece)}</div>
-        <div class="catch-info">
-          <p class="catch-species">${escapeHtml(c.espece)}</p>
-          <div class="catch-meta">
-            <span>📅 ${fmtDate(c.date)}${c.heure ? " · "+c.heure : ""}</span>
-            ${c.lieu ? `<span>📍 ${escapeHtml(c.lieu)}</span>` : ""}
-            ${c.meteo ? `<span>${c.meteo}</span>` : ""}
-          </div>
-          <div class="catch-nums">
-            ${c.taille ? `<div><span class="n">${parseFloat(c.taille)} cm</span><span class="l">Taille</span></div>` : ""}
-            ${c.technique ? `<div><span class="n" style="font-size:12.5px; font-weight:500;">${escapeHtml(c.technique)}</span><span class="l">Technique</span></div>` : ""}
-          </div>
-        </div>
-      </div>
-      ${c.photo ? `<img class="catch-photo" src="${c.photo}" onclick="openLightbox('${c.id}')" alt="Photo de la prise">` : ""}
-      ${c.notes ? `<div class="catch-notes">${escapeHtml(c.notes)}</div>` : ""}
-      <div class="catch-actions">
-        <button class="icon-btn" onclick="editCatch('${c.id}')">✏️ Modifier</button>
-        ${c.lat ? `<a class="icon-btn" href="geo:${c.lat},${c.lng}?q=${c.lat},${c.lng}(${encodeURIComponent(c.espece)})" target="_blank" rel="noopener">🗺️ Voir sur la carte</a>` : ""}
-        <button class="icon-btn danger" onclick="deleteCatch('${c.id}')">🗑️ Supprimer</button>
-      </div>
-    </div>
-  `).join("");
-}
-
-// ---------- Liste : Sorties ----------
-function catchesForDate(dateStr){
-  return catches.filter(c => c.date === dateStr).length;
-}
-
-function renderOutingList(){
-  const list = document.getElementById("list");
-  const sorted = [...outings].sort((a,b)=> b.date.localeCompare(a.date));
-
-  if(sorted.length === 0){
-    list.innerHTML = `
-      <div class="empty">
-        <span class="big">🚣</span>
-        <p>Aucune sortie enregistrée pour l'instant.</p>
-        <p class="hint">Touchez "Nouvelle sortie" pour noter ta prochaine session.</p>
-      </div>`;
-    return;
-  }
-
-  list.innerHTML = sorted.map(o=>{
-    const enregistrees = catchesForDate(o.date);
-    const libre = parseInt(o.libre)||0;
-    const total = enregistrees + libre;
-    return `
-    <div class="outing-card" data-id="${o.id}">
-      <div class="outing-top">
-        <div>
-          <p class="outing-date">${fmtDate(o.date)}${o.bredouille ? '<span class="bredouille-badge">bredouille</span>' : ''}</p>
-        </div>
-      </div>
-      <div class="outing-stats-row">
-        ${o.heures ? `<div><span class="n">${parseFloat(o.heures)} h</span><span class="l">Au bord de l'eau</span></div>` : ""}
-        <div><span class="n">${total}</span><span class="l">Poissons au total</span></div>
-      </div>
-      ${(enregistrees>0 || libre>0) ? `<p class="outing-breakdown">${enregistrees} enregistrée${enregistrees===1?"":"s"} dans Prises + ${libre} compté${libre===1?"":"s"} à part</p>` : ""}
-      ${o.notes ? `<div class="catch-notes">${escapeHtml(o.notes)}</div>` : ""}
-      <div class="catch-actions">
-        <button class="icon-btn" onclick="editOuting('${o.id}')">✏️ Modifier</button>
-        <button class="icon-btn danger" onclick="deleteOuting('${o.id}')">🗑️ Supprimer</button>
-      </div>
-    </div>
-  `;}).join("");
-}
-
-function escapeHtml(str){
-  return (str||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-function renderAll(){
-  renderStats();
-  if(activeTab === "prises"){
-    renderFilterOptions();
-    renderCatchList();
-  }else{
-    renderOutingList();
-  }
-}
-
-// ---------- Sheet Prise ----------
-function openSheet(){ document.getElementById("overlay").classList.add("open"); }
-function closeSheet(){
-  document.getElementById("overlay").classList.remove("open");
-  document.getElementById("catchForm").reset();
-  editingId = null;
-  document.getElementById("editId").value = "";
-  document.getElementById("formTitle").textContent = "Nouvelle prise";
-  document.querySelectorAll(".species-picker button").forEach(b=>b.classList.remove("active"));
-  hideSuggestions();
-  resetPhoto();
-  photoChanged = false;
-  resetGps();
-}
-
-function buildSpeciesPicker(){
-  const wrap = document.getElementById("speciesPicker");
-  wrap.innerHTML = QUICK_SPECIES.map(s => `<button type="button" data-val="${s.split(' ').slice(1).join(' ')}">${s.split(' ')[0]}</button>`).join("");
-  wrap.querySelectorAll("button").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      wrap.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById("espece").value = btn.dataset.val;
-      hideSuggestions();
-    });
-  });
-}
-
-const especeInput = () => document.getElementById("espece");
-const suggestionsBox = () => document.getElementById("especeSuggestions");
-
-function showSuggestions(query){
-  const box = suggestionsBox();
-  const q = query.trim().toLowerCase();
-  if(!q){ hideSuggestions(); return; }
-  const matches = SPECIES_LIST.filter(s => s.toLowerCase().startsWith(q)).slice(0,8);
-  if(matches.length === 0){
-    box.innerHTML = `<div class="none">Aucune correspondance — tu peux saisir un nom libre.</div>`;
-  }else{
-    box.innerHTML = matches.map(s => `<button type="button" data-val="${s}">${s}</button>`).join("");
-    box.querySelectorAll("button").forEach(btn=>{
-      btn.addEventListener("mousedown", (e)=>{
-        e.preventDefault();
-        especeInput().value = btn.dataset.val;
-        hideSuggestions();
-      });
-    });
-  }
-  box.classList.add("open");
-}
-function hideSuggestions(){ suggestionsBox().classList.remove("open"); }
-especeInput().addEventListener("input", (e)=> showSuggestions(e.target.value));
-especeInput().addEventListener("focus", (e)=> showSuggestions(e.target.value));
-especeInput().addEventListener("blur", ()=> setTimeout(hideSuggestions, 120));
-
-// ---------- Photo ----------
-function resizeImage(file, maxWidth, quality){
-  maxWidth = maxWidth || 900;
-  quality = quality || 0.72;
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = (e)=>{
-      const img = new Image();
-      img.onload = ()=>{
-        let w = img.width, h = img.height;
-        if(w > maxWidth){ h = Math.round(h*(maxWidth/w)); w = maxWidth; }
-        const canvas = document.createElement("canvas");
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img,0,0,w,h);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-function showPhotoPreview(dataUrl){
-  currentPhotoData = dataUrl;
-  document.getElementById("photoPreview").src = dataUrl;
-  document.getElementById("photoPreviewWrap").style.display = "block";
-}
-function resetPhoto(){
-  currentPhotoData = null;
-  document.getElementById("photoPreviewWrap").style.display = "none";
-  document.getElementById("photoPreview").src = "";
-  document.getElementById("photoCamera").value = "";
-  document.getElementById("photoGallery").value = "";
-}
-async function handlePhotoInput(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  try{
-    const dataUrl = await resizeImage(file);
-    showPhotoPreview(dataUrl);
-    photoChanged = true;
-  }catch(err){ showToast("Impossible de lire cette photo"); }
-}
-document.getElementById("photoCamera").addEventListener("change", handlePhotoInput);
-document.getElementById("photoGallery").addEventListener("change", handlePhotoInput);
-document.getElementById("photoRemove").addEventListener("click", ()=>{
-  resetPhoto();
-  photoChanged = true;
-});
-
-function openLightbox(id){
-  const c = catches.find(x=>x.id===id);
-  if(!c || !c.photo) return;
-  document.getElementById("lightboxImg").src = c.photo;
-  document.getElementById("lightbox").classList.add("open");
-}
-document.getElementById("lightboxClose").addEventListener("click", ()=>{
-  document.getElementById("lightbox").classList.remove("open");
-});
-document.getElementById("lightbox").addEventListener("click", (e)=>{
-  if(e.target.id === "lightbox") document.getElementById("lightbox").classList.remove("open");
-});
-
-// ---------- GPS ----------
-function resetGps(){
-  currentCoords = null;
-  document.getElementById("gpsStatus").textContent = "Aucune position enregistrée.";
-  document.getElementById("gpsClear").style.display = "none";
-}
-document.getElementById("gpsBtn").addEventListener("click", ()=>{
-  if(!("geolocation" in navigator)){
-    document.getElementById("gpsStatus").textContent = "GPS non disponible sur cet appareil.";
-    return;
-  }
-  document.getElementById("gpsStatus").textContent = "Localisation en cours…";
-  navigator.geolocation.getCurrentPosition(
-    pos=>{
-      currentCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-      document.getElementById("gpsStatus").textContent = `📍 ${currentCoords.lat.toFixed(5)}, ${currentCoords.lng.toFixed(5)}`;
-      document.getElementById("gpsClear").style.display = "inline";
-    },
-    err=>{ document.getElementById("gpsStatus").textContent = "Position indisponible — active la localisation."; },
-    {enableHighAccuracy:true, timeout:12000}
-  );
-});
-document.getElementById("gpsClear").addEventListener("click", resetGps);
-
-async function deleteCatch(id){
-  if(!confirm("Supprimer cette prise du carnet ?")) return;
-  const removed = catches.find(c=>c.id===id);
-  catches = catches.filter(c=>c.id!==id);
-  saveCatches();
-  renderAll();
-  showToast("Prise supprimée");
-
-  if(removed && removed.photoPath && navigator.onLine){
-    deletePhotoFromStorage(removed.photoPath).catch(()=>{});
-  }
-  if(navigator.onLine && currentUser){
-    try{
-      const { error } = await sb.from("catches").delete().eq("id", id);
-      if(error) throw error;
-    }catch(err){
-      queuePending({table:"catches", action:"delete", id});
-    }
-  }else{
-    queuePending({table:"catches", action:"delete", id});
-  }
-}
-
-function editCatch(id){
-  const c = catches.find(x=>x.id===id);
-  if(!c) return;
-  editingId = id;
-  document.getElementById("editId").value = id;
-  document.getElementById("espece").value = c.espece;
-  document.getElementById("date").value = c.date;
-  document.getElementById("heure").value = c.heure||"";
-  document.getElementById("lieu").value = c.lieu||"";
-  document.getElementById("taille").value = c.taille||"";
-  document.getElementById("meteo").value = c.meteo || "☀️ Soleil";
-  document.getElementById("techMouche").checked = !!c.techMouche;
-  document.getElementById("techLeurre").checked = !!c.techLeurre;
-  document.getElementById("techniqueLibre").value = c.techniqueLibre||"";
-  document.getElementById("notes").value = c.notes||"";
-
-  resetPhoto();
-  if(c.photo) showPhotoPreview(c.photo);
-  photoChanged = false;
-
-  resetGps();
-  if(c.lat && c.lng){
-    currentCoords = {lat:c.lat, lng:c.lng};
-    document.getElementById("gpsStatus").textContent = `📍 ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`;
-    document.getElementById("gpsClear").style.display = "inline";
-  }
-
-  document.getElementById("formTitle").textContent = "Modifier la prise";
-  openSheet();
-}
-
-document.getElementById("openAdd").addEventListener("click", ()=>{
-  if(activeTab === "prises"){
-    const now = new Date();
-    document.getElementById("date").value = now.toISOString().slice(0,10);
-    document.getElementById("heure").value = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
-    openSheet();
-  }else{
-    document.getElementById("outingDate").value = new Date().toISOString().slice(0,10);
-    openOutingSheet();
-  }
-});
-document.getElementById("cancelBtn").addEventListener("click", closeSheet);
-document.getElementById("overlay").addEventListener("click", (e)=>{ if(e.target.id === "overlay") closeSheet(); });
-
-document.getElementById("catchForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const techMouche = document.getElementById("techMouche").checked;
-  const techLeurre = document.getElementById("techLeurre").checked;
-  const techniqueLibre = document.getElementById("techniqueLibre").value.trim();
-  const techniqueParts = [];
-  if(techMouche) techniqueParts.push("Mouche");
-  if(techLeurre) techniqueParts.push("Leurre");
-  if(techniqueLibre) techniqueParts.push(techniqueLibre);
-
-  const id = editingId || uid();
-  const prevCatch = editingId ? catches.find(c=>c.id===editingId) : null;
-
-  let photoPath = prevCatch ? prevCatch.photoPath : null;
-  let needsPhotoUpload = false;
-  let photoBase64ToQueue = null;
-
-  if(photoChanged){
-    if(currentPhotoData){
-      if(navigator.onLine){
-        const uploaded = await uploadPhoto(id, currentPhotoData);
-        if(uploaded){ photoPath = uploaded; }
-        else { needsPhotoUpload = true; photoBase64ToQueue = currentPhotoData; }
-      }else{
-        needsPhotoUpload = true;
-        photoBase64ToQueue = currentPhotoData;
-      }
-    }else{
-      if(prevCatch && prevCatch.photoPath && navigator.onLine){
-        deletePhotoFromStorage(prevCatch.photoPath).catch(()=>{});
-      }
-      photoPath = null;
-    }
-  }
-
-  const data = {
-    id,
-    espece: document.getElementById("espece").value.trim(),
-    date: document.getElementById("date").value,
-    heure: document.getElementById("heure").value,
-    lieu: document.getElementById("lieu").value.trim(),
-    taille: document.getElementById("taille").value,
-    meteo: document.getElementById("meteo").value,
-    techMouche: techMouche,
-    techLeurre: techLeurre,
-    techniqueLibre: techniqueLibre,
-    technique: techniqueParts.join(" · "),
-    notes: document.getElementById("notes").value.trim(),
-    photo: currentPhotoData || null,
-    photoPath: photoPath,
-    lat: currentCoords ? currentCoords.lat : null,
-    lng: currentCoords ? currentCoords.lng : null
-  };
-  if(editingId){
-    const idx = catches.findIndex(c=>c.id===editingId);
-    catches[idx] = data;
-  }else{
-    catches.push(data);
-  }
-  saveCatches();
-  closeSheet();
-  renderAll();
-  showToast(editingId ? "Prise mise à jour" : "Prise enregistrée");
-
-  const dbRow = toDbCatch(data);
-  if(navigator.onLine && currentUser){
-    try{
-      const { error } = await sb.from("catches").upsert(dbRow);
-      if(error) throw error;
-      if(needsPhotoUpload) queuePending({table:"catches", action:"upsert", id, payload:dbRow, needsPhotoUpload:true, photoBase64:photoBase64ToQueue});
-    }catch(err){
-      queuePending({table:"catches", action:"upsert", id, payload:dbRow, needsPhotoUpload, photoBase64:photoBase64ToQueue});
-    }
-  }else{
-    queuePending({table:"catches", action:"upsert", id, payload:dbRow, needsPhotoUpload, photoBase64:photoBase64ToQueue});
-  }
-});
-
-// ---------- Sheet Sortie ----------
-function openOutingSheet(){ document.getElementById("outingOverlay").classList.add("open"); }
-function closeOutingSheet(){
-  document.getElementById("outingOverlay").classList.remove("open");
-  document.getElementById("outingForm").reset();
-  outingEditingId = null;
-  document.getElementById("outingEditId").value = "";
-  document.getElementById("outingFormTitle").textContent = "Nouvelle sortie";
-}
-document.getElementById("outingCancelBtn").addEventListener("click", closeOutingSheet);
-document.getElementById("outingOverlay").addEventListener("click", (e)=>{ if(e.target.id === "outingOverlay") closeOutingSheet(); });
-
-document.getElementById("outingForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const data = {
-    id: outingEditingId || uid(),
-    date: document.getElementById("outingDate").value,
-    heures: document.getElementById("outingHeures").value,
-    libre: document.getElementById("outingLibre").value || 0,
-    bredouille: document.getElementById("outingBredouille").checked,
-    notes: document.getElementById("outingNotes").value.trim()
-  };
-  if(outingEditingId){
-    const idx = outings.findIndex(o=>o.id===outingEditingId);
-    outings[idx] = data;
-  }else{
-    outings.push(data);
-  }
-  saveOutings();
-  closeOutingSheet();
-  renderAll();
-  showToast(outingEditingId ? "Sortie mise à jour" : "Sortie enregistrée");
-
-  const dbRow = toDbOuting(data);
-  if(navigator.onLine && currentUser){
-    try{
-      const { error } = await sb.from("outings").upsert(dbRow);
-      if(error) throw error;
-    }catch(err){
-      queuePending({table:"outings", action:"upsert", id:data.id, payload:dbRow});
-    }
-  }else{
-    queuePending({table:"outings", action:"upsert", id:data.id, payload:dbRow});
-  }
-});
-
-function editOuting(id){
-  const o = outings.find(x=>x.id===id);
-  if(!o) return;
-  outingEditingId = id;
-  document.getElementById("outingEditId").value = id;
-  document.getElementById("outingDate").value = o.date;
-  document.getElementById("outingHeures").value = o.heures||"";
-  document.getElementById("outingLibre").value = o.libre||0;
-  document.getElementById("outingBredouille").checked = !!o.bredouille;
-  document.getElementById("outingNotes").value = o.notes||"";
-  document.getElementById("outingFormTitle").textContent = "Modifier la sortie";
-  openOutingSheet();
-}
-async function deleteOuting(id){
-  if(!confirm("Supprimer cette sortie du carnet ?")) return;
-  outings = outings.filter(o=>o.id!==id);
-  saveOutings();
-  renderAll();
-  showToast("Sortie supprimée");
-
-  if(navigator.onLine && currentUser){
-    try{
-      const { error } = await sb.from("outings").delete().eq("id", id);
-      if(error) throw error;
-    }catch(err){
-      queuePending({table:"outings", action:"delete", id});
-    }
-  }else{
-    queuePending({table:"outings", action:"delete", id});
-  }
-}
-
-// ---------- Carte des prises ----------
-let leafletMap = null;
-let leafletMarkers = null;
-
-function openMap(){
-  document.getElementById("mapOverlay").classList.add("open");
-  if(!navigator.onLine){
-    document.getElementById("mapContainer").style.display = "none";
-    document.getElementById("mapOffline").style.display = "flex";
-    return;
-  }
-  document.getElementById("mapContainer").style.display = "block";
-  document.getElementById("mapOffline").style.display = "none";
-
-  if(!leafletMap){
-    leafletMap = L.map("mapContainer");
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(leafletMap);
-    leafletMarkers = L.layerGroup().addTo(leafletMap);
-  }
-
-  buildMapMarkers();
-
-  setTimeout(()=>{ leafletMap.invalidateSize(); }, 80);
-}
-
-function closeMap(){
-  document.getElementById("mapOverlay").classList.remove("open");
-}
-
-function buildMapMarkers(){
-  if(!leafletMap || !leafletMarkers) return;
-  leafletMarkers.clearLayers();
-
-  const pts = catches.filter(c => c.lat != null && c.lng != null && c.lat !== "" && c.lng !== "");
-
-  if(pts.length === 0){
-    leafletMap.setView([46.6, 2.5], 5); // vue générale France par défaut
-    return;
-  }
-
-  pts.forEach(c=>{
-    const marker = L.marker([c.lat, c.lng]);
-    const popupHtml = `
+    <div class="form-card stock-current-card">
       <div>
-        ${c.photo ? `<img class="popup-photo" src="${c.photo}" alt="">` : ""}
-        <p class="popup-species">${escapeHtml(c.espece)}</p>
-        <p class="popup-meta">📅 ${fmtDate(c.date)}${c.taille ? " · "+parseFloat(c.taille)+" cm" : ""}</p>
-        ${c.lieu ? `<p class="popup-meta">📍 ${escapeHtml(c.lieu)}</p>` : ""}
-        <a class="popup-link" onclick="openCatchFromMap('${c.id}')">Voir la fiche complète →</a>
+        <div class="label" style="font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:6px;">Stock actuel</div>
+        <div class="big" id="stockCurrentBig">0<span class="u">sacs</span></div>
       </div>
-    `;
-    marker.bindPopup(popupHtml);
-    marker.addTo(leafletMarkers);
-  });
+      <button class="btn secondary" id="btnMoinsUnSac">− 1 sac utilisé</button>
+    </div>
 
-  const group = L.featureGroup(pts.map(c => L.marker([c.lat, c.lng])));
-  leafletMap.fitBounds(group.getBounds().pad(0.2), { maxZoom: 14 });
-}
+    <div class="chart-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Ajouter un achat</h3>
+        <form id="formAchat">
+          <div class="form-grid">
+            <div class="field"><label>Date</label><input type="date" name="date" required></div>
+            <div class="field"><label>Magasin</label><input type="text" name="magasin" placeholder="Leroy Merlin"></div>
+            <div class="field"><label>Marque</label><input type="text" name="marque" placeholder="Woodstock"></div>
+            <div class="field"><label>Nombre de sacs</label><input type="number" step="1" name="nb_sacs" required></div>
+            <div class="field"><label>Prix / sac (€)</label><input type="number" step="0.01" name="prix_sac" required></div>
+          </div>
+          <div class="field" style="margin-bottom:14px;"><label>Note</label><input type="text" name="note" placeholder="ex: remise fidélité"></div>
+          <button class="btn" type="submit">+ Ajouter l'achat (et ajouter au stock)</button>
+        </form>
+      </div>
 
-function openCatchFromMap(id){
-  closeMap();
-  switchTab("prises");
-  editCatch(id);
-}
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Corriger le stock (inventaire)</h3>
+        <form id="formStock">
+          <div class="form-grid">
+            <div class="field"><label>Date</label><input type="date" name="date" required></div>
+            <div class="field"><label>Stock (sacs)</label><input type="number" step="0.5" name="stock_sacs" required></div>
+          </div>
+          <button class="btn secondary" type="submit">Enregistrer le relevé</button>
+        </form>
+      </div>
+    </div>
 
-document.getElementById("mapBtn").addEventListener("click", openMap);
-document.getElementById("mapCloseBtn").addEventListener("click", closeMap);
-window.addEventListener("online", ()=>{
-  if(document.getElementById("mapOverlay").classList.contains("open")) openMap();
-});
+    <div class="chart-grid" style="grid-template-columns: 1fr 1fr;">
+      <div>
+        <h3 style="font-family:var(--font-display); font-weight:500; margin-bottom:14px;">Achats</h3>
+        <div class="table-scroll">
+          <table id="achatsTable">
+            <thead><tr><th>Date</th><th>Magasin</th><th>Marque</th><th>Sacs</th><th>Prix/sac</th><th>Total</th><th>Note</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-state" id="achatsEmpty" style="display:none;">Aucun achat enregistré.</div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-family:var(--font-display); font-weight:500; margin-bottom:14px;">Relevés de stock</h3>
+        <div class="table-scroll">
+          <table id="stockTable">
+            <thead><tr><th>Date</th><th>Stock</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-state" id="stockEmpty" style="display:none;">Aucun relevé de stock.</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-// ---------- Menu (hamburger) ----------
-document.getElementById("menuBtn").addEventListener("click", ()=>{
-  document.getElementById("menuOverlay").classList.add("open");
-});
-document.getElementById("menuClose").addEventListener("click", ()=>{
-  document.getElementById("menuOverlay").classList.remove("open");
-});
-document.getElementById("menuOverlay").addEventListener("click", (e)=>{
-  if(e.target.id === "menuOverlay") document.getElementById("menuOverlay").classList.remove("open");
-});
-document.getElementById("menuExport").addEventListener("click", ()=>{
-  exportData();
-  document.getElementById("menuOverlay").classList.remove("open");
-});
-document.getElementById("menuImport").addEventListener("click", ()=>{
-  importData();
-  document.getElementById("menuOverlay").classList.remove("open");
-});
+  <!-- ============ SETTINGS ============ -->
+  <section class="panel" id="panel-settings">
+    <div class="settings-grid">
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Capacité de stockage</h3>
+        <div class="field">
+          <label>Stock "plein" (nombre de sacs de référence pour la jauge)</label>
+          <input type="number" step="1" id="capaciteInput">
+        </div>
+        <p class="hint">Sert uniquement à calculer le remplissage de la jauge en haut de page.</p>
+      </div>
 
-// ---------- Recherche / tri / filtre (onglet Prises) ----------
-document.getElementById("search").addEventListener("input", renderCatchList);
-document.getElementById("filterEspece").addEventListener("change", renderCatchList);
-document.getElementById("sortBtn").addEventListener("click", ()=>{
-  sortMode = sortMode === "date" ? "taille" : "date";
-  document.getElementById("sortBtn").textContent = sortMode === "date" ? "⇅ Date" : "⇅ Taille";
-  renderCatchList();
-});
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Export</h3>
+        <p class="hint" style="margin-top:0;">Exporte tes données (stockées dans Supabase) en Excel pour les consulter ou les archiver, ou en JSON pour une sauvegarde.</p>
+        <div class="btn-row">
+          <button class="btn" id="btnExportExcel">⬇ Exporter en Excel (.xlsx)</button>
+          <button class="btn secondary" id="btnExportJson">⬇ Exporter en JSON</button>
+        </div>
+      </div>
 
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 2200);
-}
+      <div class="form-card" style="margin-bottom:0;">
+        <h3>Réinitialisation</h3>
+        <p class="hint" style="margin-top:0;">Supprime définitivement toutes les sessions, achats et relevés de stock dans Supabase. Irréversible.</p>
+        <button class="btn ghost" id="btnResetAll">↺ Tout supprimer</button>
+      </div>
+    </div>
+  </section>
 
-// ---------- Export / Import (bundle Prises + Sorties) ----------
-function exportData(){
-  const payload = { catches: catches, outings: outings };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "carnet-peche-export.json";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-function importData(){
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "application/json";
-  input.onchange = (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev)=>{
-      try{
-        const imported = JSON.parse(ev.target.result);
-        if(Array.isArray(imported)){
-          // ancien format : uniquement les prises
-          catches = imported;
-        }else if(imported && typeof imported === "object"){
-          catches = Array.isArray(imported.catches) ? imported.catches : catches;
-          outings = Array.isArray(imported.outings) ? imported.outings : outings;
-        }
-        saveCatches();
-        saveOutings();
-        renderAll();
-        showToast("Import réussi");
-      }catch(err){
-        alert("Fichier invalide.");
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
+  <footer>
+    Carnet de bord perso — données stockées dans Supabase, synchronisées entre tous tes appareils. · <a href="ajouter.html">Page d'ajout rapide (mobile)</a>
+  </footer>
 
-// ---------- Init ----------
-buildSpeciesPicker();
-loadData();
-renderAll();
-initAuth();
+</div>
 
-if("serviceWorker" in navigator){
-  window.addEventListener("load", ()=>{
-    navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
-  });
-}
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="auth.js"></script>
+<script src="app.js"></script>
+
 </body>
 </html>
