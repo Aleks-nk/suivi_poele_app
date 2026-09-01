@@ -59,7 +59,7 @@ function mapRow(row) {
   return Object.assign({}, row, { _id: row.id, seq: new Date(row.created_at).getTime() });
 }
 
-async function reloadAll() {
+async function reloadAll(isRetry = false) {
   showSyncStatus("Synchronisation…");
   try {
     const [s, a, st] = await Promise.all([
@@ -79,6 +79,21 @@ async function reloadAll() {
     renderAll();
   } catch (err) {
     console.error(err);
+
+    const isAuthError = err && (err.status === 401 || err.code === "PGRST301" || /jwt|token/i.test(err.message || ""));
+    if (isAuthError) {
+      showSyncStatus("Session expirée — reconnexion nécessaire.", true);
+      await db.auth.signOut();
+      await requireAuth(); // ré-affiche l'écran de connexion
+      return;
+    }
+
+    if (!isRetry) {
+      // premier échec probable = petit souci réseau au tout premier chargement : on retente une fois
+      showSyncStatus("Nouvelle tentative de connexion…");
+      setTimeout(() => reloadAll(true), 1500);
+      return;
+    }
     showSyncStatus("Erreur de connexion à Supabase — vérifie supabase-config.js et le script SQL (voir console F12).", true);
   }
 }
