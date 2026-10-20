@@ -56,7 +56,8 @@
 
   <nav class="tabs">
     <button class="active" data-target="panel-dashboard">Tableau de bord</button>
-    <button data-target="panel-sessions">Sessions</button>
+    <button data-target="panel-sessions" id="tabSessions">Sessions</button>
+    <button data-target="panel-historique">Historique</button>
     <button data-target="panel-achats">Achats &amp; stock</button>
     <button data-target="panel-settings">Réglages</button>
   </nav>
@@ -78,7 +79,8 @@
   <section class="panel" id="panel-sessions">
 
     <div class="form-card">
-      <h3>Ajouter une session</h3>
+      <h3 id="formSessionTitle">Ajouter une session</h3>
+      <div class="edit-banner" id="editBanner" style="display:none;"></div>
       <form id="formSession">
 
         <div class="field-group-title">Horaires</div>
@@ -118,16 +120,22 @@
         </div>
 
         <div class="field" style="margin-bottom:14px;"><label>Commentaires</label><textarea name="commentaires" placeholder="Notes libres sur la session…"></textarea></div>
-        <button class="btn" type="submit">+ Ajouter la session</button>
+        <div class="btn-row">
+          <button class="btn" type="submit" id="btnSubmitSession">+ Ajouter la session</button>
+          <button class="btn ghost" type="button" id="btnCancelEdit" style="display:none;">Annuler la modification</button>
+        </div>
       </form>
     </div>
+  </section>
 
+  <!-- ============ HISTORIQUE ============ -->
+  <section class="panel" id="panel-historique">
     <div class="table-toolbar">
       <h3 style="margin:0;">Historique des sessions</h3>
       <input type="search" id="searchSessions" placeholder="Rechercher (date, commentaire…)">
     </div>
     <div class="session-list" id="sessionList"></div>
-    <div class="empty-state" id="sessionsEmpty" style="display:none;">Aucune session pour l'instant — ajoute la première ci-dessus.</div>
+    <div class="empty-state" id="sessionsEmpty" style="display:none;">Aucune session pour l'instant — ajoute la première dans l'onglet Sessions.</div>
   </section>
 
   <!-- ============ ACHATS & STOCK ============ -->

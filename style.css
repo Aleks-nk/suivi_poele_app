@@ -619,3 +619,18 @@ footer {
   font-family: var(--font-body);
 }
 .btnLogout:hover { color: var(--bad); border-color: var(--bad); }
+
+/* ---------- Edition de session ---------- */
+
+.edit-banner {
+  background: rgba(255, 106, 51, 0.12);
+  border: 1px solid var(--ember-dim);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.row-actions button.edit:hover { color: var(--ember); }
+.session-card-head .row-actions { display: inline-flex; gap: 6px; }

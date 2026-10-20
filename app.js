@@ -100,17 +100,70 @@ async function reloadAll(isRetry = false) {
 
 /* ---------------- Tabs ---------------- */
 
+function activateTab(targetId) {
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.target === targetId));
+  document.querySelectorAll("section.panel").forEach((p) => p.classList.toggle("active", p.id === targetId));
+  if (targetId === "panel-dashboard") renderCharts();
+}
+
 function initTabs() {
-  const buttons = document.querySelectorAll("nav.tabs button");
-  buttons.forEach((btn) => {
+  document.querySelectorAll("nav.tabs button").forEach((btn) => {
     btn.addEventListener("click", () => {
-      buttons.forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll("section.panel").forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(btn.dataset.target).classList.add("active");
-      if (btn.dataset.target === "panel-dashboard") renderCharts();
+      // quitter l'onglet Sessions en plein milieu d'une modification = on annule la modification
+      if (editingId && btn.dataset.target !== "panel-sessions") cancelEditSession(false);
+      activateTab(btn.dataset.target);
     });
   });
+}
+
+/* ---------------- Modification d'une session ---------------- */
+
+let editingId = null;
+
+function setToggle(id, on) { document.getElementById(id).classList.toggle("active", !!on); }
+
+function startEditSession(id) {
+  const s = DATA.sessions.find((x) => x._id === id);
+  if (!s) return;
+  editingId = id;
+  const f = document.getElementById("formSession");
+  f.date.value = s.date || todayISO();
+  f.allumage.value = s.allumage || "";
+  f.arret.value = s.arret || "";
+  f.puissance.value = s.puissance ?? "";
+  f.temp_demandee.value = s.temp_demandee ?? "";
+  ["bas", "o", "z", "n"].forEach((k) => {
+    f["temp_ambiante_" + k].value = s["temp_ambiante_" + k] ?? "";
+    f["temp_arret_" + k].value = s["temp_arret_" + k] ?? "";
+  });
+  f.commentaires.value = s.commentaires || "";
+  setToggle("btnNettoyage", s.nettoyage);
+  setToggle("btnCharge", s.charge);
+  f.allumage.dispatchEvent(new Event("input")); // recalcule l'affichage de la durée
+
+  document.getElementById("formSessionTitle").textContent = "Modifier la session";
+  const banner = document.getElementById("editBanner");
+  banner.style.display = "block";
+  banner.textContent = `Modification de la session du ${fmtDate(s.date)}${s.allumage ? " (" + s.allumage + ")" : ""}.`;
+  document.getElementById("btnSubmitSession").textContent = "Enregistrer les modifications";
+  document.getElementById("btnCancelEdit").style.display = "";
+  activateTab("panel-sessions");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function cancelEditSession(goBackToHistory = true) {
+  editingId = null;
+  const f = document.getElementById("formSession");
+  f.reset();
+  setDefaultDate(f);
+  setToggle("btnNettoyage", false);
+  setToggle("btnCharge", false);
+  document.getElementById("dureeDisplay").textContent = "renseigne l'allumage et l'arrêt";
+  document.getElementById("formSessionTitle").textContent = "Ajouter une session";
+  document.getElementById("editBanner").style.display = "none";
+  document.getElementById("btnSubmitSession").textContent = "+ Ajouter la session";
+  document.getElementById("btnCancelEdit").style.display = "none";
+  if (goBackToHistory) activateTab("panel-historique");
 }
 
 /* ---------------- Stock helpers ---------------- */
@@ -320,12 +373,16 @@ function renderSessionsList(filter = "") {
         ${s.puissance ? `<span class="spuiss">Puissance ${s.puissance}</span>` : ""}
         ${pills}
         <span class="spacer"></span>
-        <span class="row-actions"><button title="Supprimer" data-id="${s._id}">✕</button></span>
+        <span class="row-actions"><button class="edit" title="Modifier" data-edit="${s._id}">✎</button><button title="Supprimer" data-id="${s._id}">✕</button></span>
       </div>
       ${temps ? `<div class="temp-readout">${temps}</div>` : ""}
       ${s.commentaires ? `<div class="session-comment">${s.commentaires}</div>` : ""}
     `;
     list.appendChild(div);
+  });
+
+  list.querySelectorAll("button[data-edit]").forEach((btn) => {
+    btn.addEventListener("click", () => startEditSession(btn.dataset.edit));
   });
 
   list.querySelectorAll("button[data-id]").forEach((btn) => {
@@ -429,6 +486,13 @@ function initForms() {
       charge: document.getElementById("btnCharge").classList.contains("active"),
       commentaires: f.commentaires.value || null,
     };
+    if (editingId) {
+      const { error } = await db.from("sessions").update(entry).eq("id", editingId);
+      if (error) { console.error(error); showSyncStatus("Erreur de modification de la session", true); return; }
+      cancelEditSession(true);
+      reloadAll();
+      return;
+    }
     const { error } = await db.from("sessions").insert(entry);
     if (error) { console.error(error); showSyncStatus("Erreur d'ajout de la session", true); return; }
     f.reset();
@@ -438,6 +502,8 @@ function initForms() {
     document.getElementById("btnCharge").classList.remove("active");
     reloadAll();
   });
+
+  document.getElementById("btnCancelEdit").addEventListener("click", () => cancelEditSession(true));
 
   document.getElementById("formAchat").addEventListener("submit", async (e) => {
     e.preventDefault();
