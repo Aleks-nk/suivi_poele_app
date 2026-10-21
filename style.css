@@ -634,3 +634,56 @@ footer {
 
 .row-actions button.edit:hover { color: var(--ember); }
 .session-card-head .row-actions { display: inline-flex; gap: 6px; }
+
+/* ---------- Session en cours ---------- */
+
+#runningBox { margin-bottom: 20px; }
+#runningBox:empty { display: none; margin: 0; }
+
+.running-card {
+  background: var(--surface);
+  border: 1px solid var(--ember);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 0 18px rgba(255, 106, 51, 0.18);
+}
+
+.running-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+.running-head b { font-family: var(--font-mono); color: var(--ember); }
+.running-since { color: var(--text-muted); font-size: 12.5px; font-family: var(--font-mono); }
+.running-meta { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+
+.running-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 8px var(--ember);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.btn-stop { background: var(--surface-2); color: var(--ember); border: 1px solid var(--ember); }
+.btn-stop:hover { background: var(--ember); color: #1a0f08; }
+
+.time-now { display: flex; gap: 6px; }
+.time-now input { flex: 1; min-width: 0; }
+.btn-now {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+.btn-now:hover { border-color: var(--ember); color: var(--ember); }

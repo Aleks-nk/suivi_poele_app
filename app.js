@@ -32,6 +32,16 @@ function sortChrono(arr) {
     return (a.seq || 0) - (b.seq || 0);
   });
 }
+function sortSessionsDesc(arr) {
+  // du plus récent au plus ancien : date, puis heure d'allumage, puis ordre d'ajout
+  return [...arr].sort((a, b) => {
+    const d = (b.date || "").localeCompare(a.date || "");
+    if (d !== 0) return d;
+    const t = (b.allumage || "").localeCompare(a.allumage || "");
+    if (t !== 0) return t;
+    return (b.seq || 0) - (a.seq || 0);
+  });
+}
 function monthKey(iso) { return iso ? iso.slice(0, 7) : null; }
 
 function computeDuration(allumage, arret) {
@@ -348,14 +358,16 @@ function tempChip(label, value) {
 function renderSessionsList(filter = "") {
   const list = document.getElementById("sessionList");
   list.innerHTML = "";
-  const rows = sortByDateDesc(DATA.sessions).filter((s) => !filter || JSON.stringify(s).toLowerCase().includes(filter.toLowerCase()));
+  const rows = sortSessionsDesc(DATA.sessions).filter((s) => !filter || JSON.stringify(s).toLowerCase().includes(filter.toLowerCase()));
   document.getElementById("sessionsEmpty").style.display = rows.length ? "none" : "block";
 
   rows.forEach((s) => {
     const div = document.createElement("div");
     div.className = "session-card";
-    const dur = s.duree_label || (s.duree_h ? `${s.duree_h} h` : "—");
+    const open = isOpenSession(s);
+    const dur = open ? "en cours" : (s.duree_label || (s.duree_h ? `${s.duree_h} h` : "—"));
     const pills = [
+      open ? '<span class="pill" style="background:var(--ember); color:#1a0f08;">🔥 En cours</span>' : "",
       s.nettoyage ? '<span class="pill" style="background:var(--smoke); color:#0d1416;">🧹 Nettoyage</span>' : "",
       s.charge ? '<span class="pill" style="background:var(--gold); color:#1a0f08;">🔄 Charge</span>' : "",
     ].join(" ");
@@ -368,7 +380,7 @@ function renderSessionsList(filter = "") {
     div.innerHTML = `
       <div class="session-card-head">
         <span class="sdate">${fmtDate(s.date)}</span>
-        <span class="stimes">${s.allumage || "?"} → ${s.arret || "?"}</span>
+        <span class="stimes">${s.allumage || "?"} → ${s.arret || (open ? "en cours" : "?")}</span>
         <span class="sduree">${dur}</span>
         ${s.puissance ? `<span class="spuiss">Puissance ${s.puissance}</span>` : ""}
         ${pills}
@@ -426,7 +438,7 @@ function renderAchatsTable() {
 function renderStockTable() {
   const tbody = document.querySelector("#stockTable tbody");
   tbody.innerHTML = "";
-  const rows = sortByDateDesc(DATA.stock);
+  const rows = sortChrono(DATA.stock).reverse();
   document.getElementById("stockEmpty").style.display = rows.length ? "none" : "block";
   rows.forEach((s) => {
     const tr = document.createElement("tr");
@@ -598,6 +610,7 @@ function exportExcel() {
 /* ---------------- Init ---------------- */
 
 function renderAll() {
+  renderRunningBox(DATA.sessions.filter(isOpenSession), { onChanged: reloadAll, notify: showSyncStatus });
   renderGauge();
   renderStatCards();
   renderSessionsList(document.getElementById("searchSessions").value);
@@ -610,6 +623,7 @@ async function startApp() {
   SETTINGS = loadSettings();
   document.querySelectorAll('input[name="date"]').forEach((el) => { el.value = todayISO(); });
   initTabs();
+  initNowButtons();
   initForms();
   initSettings();
   await reloadAll();

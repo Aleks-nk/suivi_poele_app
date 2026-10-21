@@ -54,6 +54,8 @@
     </div>
   </header>
 
+  <div id="runningBox"></div>
+
   <nav class="tabs">
     <button class="active" data-target="panel-dashboard">Tableau de bord</button>
     <button data-target="panel-sessions" id="tabSessions">Sessions</button>
@@ -86,8 +88,8 @@
         <div class="field-group-title">Horaires</div>
         <div class="form-grid">
           <div class="field"><label>Date</label><input type="date" name="date" required></div>
-          <div class="field"><label>Heure allumage</label><input type="time" name="allumage"></div>
-          <div class="field"><label>Heure arrêt</label><input type="time" name="arret"></div>
+          <div class="field"><label>Heure allumage</label><div class="time-now"><input type="time" name="allumage"><button type="button" class="btn-now" data-now>Maintenant</button></div></div>
+          <div class="field"><label>Heure arrêt</label><div class="time-now"><input type="time" name="arret"><button type="button" class="btn-now" data-now>Maintenant</button></div></div>
           <div class="field"><label>Durée (calculée)</label><div class="duree-display" id="dureeDisplay">renseigne l'allumage et l'arrêt</div></div>
         </div>
 
@@ -241,6 +243,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="auth.js"></script>
+<script src="running.js"></script>
 <script src="app.js"></script>
 
 </body>

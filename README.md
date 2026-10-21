@@ -9,6 +9,7 @@ Les données sont stockées dans **Supabase** (base de données en ligne), synch
 - `index.html` / `style.css` / `app.js` — le tableau de bord complet.
 - `ajouter.html` — page allégée, pensée pour le mobile, pour ajouter une session en 2 clics.
 - `auth.js` — écran de connexion partagé (utilisé par les deux pages).
+- `running.js` — gestion de la session en cours (encadré « Poêle allumé » + formulaire d'arrêt), utilisé par les deux pages.
 - `supabase-config.js` — identifiants de connexion à ta base Supabase.
 - `supabase_setup.sql` — script à exécuter une seule fois dans Supabase pour créer les tables.
 - `supabase_auth_policies.sql` — script à exécuter une seule fois pour restreindre l'accès aux personnes connectées.
@@ -32,6 +33,8 @@ Le site est protégé par un compte partagé (un seul email/mot de passe pour to
 ## Fonctionnement
 
 - **Tableau de bord** : stock actuel (jauge), autonomie estimée, statistiques clés et 5 graphiques (stock, sessions/mois, température, coût/mois, sacs consommés/mois).
+- **Session en deux temps** : à l'allumage tu saisis l'heure (bouton « Maintenant ») et les températures du moment, sans heure d'arrêt ; un encadré « 🔥 Poêle allumé » reste affiché avec un bouton « ■ Arrêter le poêle » qui demande l'heure d'arrêt, les températures d'arrêt, Nettoyage/Charge et un commentaire, puis calcule la durée.
+- **Historique** : onglet dédié, du plus récent au plus ancien, avec modification (✎) et suppression de chaque session.
 - **Sessions** : formulaire avec durée calculée automatiquement, températures des 3 chambres (O, Z, N) à l'ambiante et à l'arrêt, boutons Nettoyage/Charge, historique en cartes (adapté au mobile, pas de défilement latéral).
 - **Achats & stock** : bouton "− 1 sac utilisé", achat qui met à jour le stock automatiquement, correction manuelle possible pour recaler après un inventaire.
 - **Réglages** : capacité de référence pour la jauge, export Excel/JSON, suppression complète des données (irréversible).
