@@ -288,48 +288,101 @@ function baseChartOptions(extra = {}) {
 
 function destroyChart(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
 
+const ROOM_CHARTS = [
+  { k: "bas", color: "#3987e5" },
+  { k: "o", color: "#d95926" },
+  { k: "z", color: "#199e70" },
+  { k: "n", color: "#c98500" },
+];
+
+function avgOf(arr) {
+  return arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : null;
+}
+
+function renderRoomCharts() {
+  const c = chartColors();
+
+  // jours ayant au moins un relevé de température, moyenne par jour et par pièce
+  const byDay = {};
+  DATA.sessions.forEach((s) => {
+    if (!s.date) return;
+    ROOM_CHARTS.forEach(({ k }) => {
+      const st = tempVal(s["temp_ambiante_" + k]);
+      const en = tempVal(s["temp_arret_" + k]);
+      if (st === null && en === null) return;
+      const d = (byDay[s.date] = byDay[s.date] || {});
+      const r = (d[k] = d[k] || { s: [], e: [] });
+      if (st !== null) r.s.push(st);
+      if (en !== null) r.e.push(en);
+    });
+  });
+  const days = Object.keys(byDay).sort();
+  const labels = days.map((d) => d.slice(8, 10) + "/" + d.slice(5, 7));
+
+  const series = {};
+  let gMin = Infinity, gMax = -Infinity;
+  ROOM_CHARTS.forEach(({ k }) => {
+    const start = days.map((d) => { const v = avgOf((byDay[d][k] || { s: [] }).s); return v === null ? null : num(v, 1); });
+    const stop = days.map((d) => { const v = avgOf((byDay[d][k] || { e: [] }).e); return v === null ? null : num(v, 1); });
+    series[k] = { start, stop };
+    start.concat(stop).forEach((v) => { if (v !== null) { gMin = Math.min(gMin, v); gMax = Math.max(gMax, v); } });
+  });
+  const yMin = isFinite(gMin) ? Math.floor(gMin - 1) : 14;
+  const yMax = isFinite(gMax) ? Math.ceil(gMax + 1) : 24;
+
+  ROOM_CHARTS.forEach(({ k, color }) => {
+    destroyChart("room_" + k);
+
+    // écart moyen (arrêt - début) sur les sessions où les deux relevés existent
+    const diffs = [];
+    DATA.sessions.forEach((s) => {
+      const st = tempVal(s["temp_ambiante_" + k]), en = tempVal(s["temp_arret_" + k]);
+      if (st !== null && en !== null) diffs.push(en - st);
+    });
+    const deltaEl = document.getElementById("delta_" + k);
+    const m = avgOf(diffs);
+    deltaEl.textContent = m === null ? "—" : (m > 0 ? "+" : m < 0 ? "−" : "") + Math.abs(num(m, 1)) + "°";
+
+    const hasData = series[k].start.some((v) => v !== null) || series[k].stop.some((v) => v !== null);
+    document.getElementById("empty_" + k).style.display = hasData ? "none" : "block";
+    document.getElementById("chartRoom_" + k).style.display = hasData ? "" : "none";
+    if (!hasData) return;
+
+    const opts = baseChartOptions({
+      interaction: { mode: "index", intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label} : ${Number(ctx.parsed.y).toFixed(1)}°` } } },
+    });
+    opts.scales.x.ticks.maxTicksLimit = 6;
+    opts.scales.y.min = yMin;
+    opts.scales.y.max = yMax;
+    opts.scales.y.ticks.callback = (v) => v + "°";
+
+    charts["room_" + k] = new Chart(document.getElementById("chartRoom_" + k), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Début", data: series[k].start, borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 3, tension: 0.25, spanGaps: true },
+          { label: "Arrêt", data: series[k].stop, borderColor: color, backgroundColor: color, borderWidth: 2, borderDash: [6, 4], pointRadius: 4, pointStyle: "rectRot", tension: 0.25, spanGaps: true },
+        ],
+      },
+      options: opts,
+    });
+  });
+}
+
 function renderCharts() {
   const c = chartColors();
 
-  destroyChart("stock");
-  const stockSorted = sortChrono(DATA.stock);
-  charts.stock = new Chart(document.getElementById("chartStock"), {
-    type: "line",
-    data: { labels: stockSorted.map((s) => fmtDate(s.date)), datasets: [{ label: "Stock (sacs)", data: stockSorted.map((s) => s.stock_sacs), borderColor: c.ember, backgroundColor: c.emberFill, fill: true, tension: 0.25, pointRadius: 2 }] },
-    options: baseChartOptions(),
-  });
+  renderRoomCharts();
 
-  destroyChart("sessions");
-  const byMonth = {};
-  DATA.sessions.forEach((s) => { const mk = monthKey(s.date); if (mk) byMonth[mk] = (byMonth[mk] || 0) + 1; });
-  const months = Object.keys(byMonth).sort();
-  charts.sessions = new Chart(document.getElementById("chartSessions"), {
+  destroyChart("heures");
+  const heuresByMonth = {};
+  DATA.sessions.forEach((s) => { const mk = monthKey(s.date); if (mk && s.duree_h) heuresByMonth[mk] = (heuresByMonth[mk] || 0) + Number(s.duree_h); });
+  const heuresMonths = Object.keys(heuresByMonth).sort();
+  charts.heures = new Chart(document.getElementById("chartHeures"), {
     type: "bar",
-    data: { labels: months, datasets: [{ label: "Sessions", data: months.map((m) => byMonth[m]), backgroundColor: c.gold }] },
-    options: baseChartOptions(),
-  });
-
-  destroyChart("temp");
-  const tempByMonth = {};
-  DATA.sessions.forEach((s) => {
-    const mk = monthKey(s.date);
-    if (!mk || s.temp_ambiante_bas === null || s.temp_ambiante_bas === undefined || isNaN(s.temp_ambiante_bas)) return;
-    (tempByMonth[mk] = tempByMonth[mk] || []).push(Number(s.temp_ambiante_bas));
-  });
-  const tempMonths = Object.keys(tempByMonth).sort();
-  charts.temp = new Chart(document.getElementById("chartTemp"), {
-    type: "line",
-    data: { labels: tempMonths, datasets: [{ label: "Temp. ambiante moyenne (°C)", data: tempMonths.map((m) => num(tempByMonth[m].reduce((a, b) => a + b, 0) / tempByMonth[m].length, 1)), borderColor: c.smoke, backgroundColor: c.smokeFill, fill: true, tension: 0.25, pointRadius: 2 }] },
-    options: baseChartOptions(),
-  });
-
-  destroyChart("cout");
-  const coutByMonth = {};
-  DATA.achats.forEach((a) => { const mk = monthKey(a.date); if (mk) coutByMonth[mk] = (coutByMonth[mk] || 0) + (Number(a.prix_total) || 0); });
-  const coutMonths = Object.keys(coutByMonth).sort();
-  charts.cout = new Chart(document.getElementById("chartCout"), {
-    type: "bar",
-    data: { labels: coutMonths, datasets: [{ label: "Coût (€)", data: coutMonths.map((m) => num(coutByMonth[m], 2)), backgroundColor: c.gold }] },
+    data: { labels: heuresMonths, datasets: [{ label: "Heures de chauffe", data: heuresMonths.map((m) => num(heuresByMonth[m], 1)), backgroundColor: c.gold }] },
     options: baseChartOptions(),
   });
 
@@ -344,6 +397,14 @@ function renderCharts() {
   charts.sacsConso = new Chart(document.getElementById("chartSacsConso"), {
     type: "bar",
     data: { labels: sacsMonths, datasets: [{ label: "Sacs consommés", data: sacsMonths.map((m) => num(sacsByMonth[m], 1)), backgroundColor: c.ember }] },
+    options: baseChartOptions(),
+  });
+
+  destroyChart("stock");
+  const stockSorted = sortChrono(DATA.stock);
+  charts.stock = new Chart(document.getElementById("chartStock"), {
+    type: "line",
+    data: { labels: stockSorted.map((s) => fmtDate(s.date)), datasets: [{ label: "Stock (sacs)", data: stockSorted.map((s) => s.stock_sacs), borderColor: c.ember, backgroundColor: c.emberFill, fill: true, tension: 0.25, pointRadius: 2 }] },
     options: baseChartOptions(),
   });
 }

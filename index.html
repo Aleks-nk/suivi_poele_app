@@ -68,12 +68,55 @@
   <section class="panel active" id="panel-dashboard">
     <div class="stat-grid" id="statGrid"></div>
 
+    <h3 class="section-title">Températures par jour : début et arrêt</h3>
+    <div class="room-grid">
+      <div class="room-card">
+        <div class="room-head">
+          <span class="room-name"><span class="room-swatch" style="background:#3987e5;"></span>Bas / général</span>
+          <span class="room-delta">écart moyen <b id="delta_bas">—</b></span>
+        </div>
+        <div class="mini-chart">
+          <canvas id="chartRoom_bas"></canvas>
+          <p class="chart-empty" id="empty_bas" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+        </div>
+      </div>
+      <div class="room-card">
+        <div class="room-head">
+          <span class="room-name"><span class="room-swatch" style="background:#d95926;"></span>Chambre O</span>
+          <span class="room-delta">écart moyen <b id="delta_o">—</b></span>
+        </div>
+        <div class="mini-chart">
+          <canvas id="chartRoom_o"></canvas>
+          <p class="chart-empty" id="empty_o" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+        </div>
+      </div>
+      <div class="room-card">
+        <div class="room-head">
+          <span class="room-name"><span class="room-swatch" style="background:#199e70;"></span>Chambre Z</span>
+          <span class="room-delta">écart moyen <b id="delta_z">—</b></span>
+        </div>
+        <div class="mini-chart">
+          <canvas id="chartRoom_z"></canvas>
+          <p class="chart-empty" id="empty_z" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+        </div>
+      </div>
+      <div class="room-card">
+        <div class="room-head">
+          <span class="room-name"><span class="room-swatch" style="background:#c98500;"></span>Chambre N</span>
+          <span class="room-delta">écart moyen <b id="delta_n">—</b></span>
+        </div>
+        <div class="mini-chart">
+          <canvas id="chartRoom_n"></canvas>
+          <p class="chart-empty" id="empty_n" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+        </div>
+      </div>
+    </div>
+    <p class="chart-legend-note">Trait plein et rond : température au début. Tirets et losange : température à l'arrêt. Moyenne des sessions du jour.</p>
+
     <div class="chart-grid">
-      <div class="card"><h3>Stock de granulés dans le temps</h3><canvas id="chartStock"></canvas></div>
-      <div class="card"><h3>Nombre de sessions par mois</h3><canvas id="chartSessions"></canvas></div>
-      <div class="card"><h3>Température ambiante moyenne</h3><canvas id="chartTemp"></canvas></div>
-      <div class="card"><h3>Coût par mois</h3><canvas id="chartCout"></canvas></div>
+      <div class="card"><h3>Heures de chauffe par mois</h3><canvas id="chartHeures"></canvas></div>
       <div class="card"><h3>Sacs consommés par mois</h3><canvas id="chartSacsConso"></canvas></div>
+      <div class="card"><h3>Stock de granulés dans le temps</h3><canvas id="chartStock"></canvas></div>
     </div>
   </section>
 
