@@ -687,3 +687,35 @@ footer {
   white-space: nowrap;
 }
 .btn-now:hover { border-color: var(--ember); color: var(--ember); }
+
+/* ---------- Grille des températures (historique) ---------- */
+
+.temp-grid {
+  display: grid;
+  gap: 6px 8px;
+  align-items: center;
+  margin-top: 12px;
+  max-width: 460px;
+}
+.temp-grid .th,
+.temp-grid .rl {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.temp-grid .th { text-align: center; }
+.temp-grid .cell {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 6px;
+  text-align: center;
+}
+.temp-grid .cell.empty { color: var(--text-muted); background: none; border-style: dashed; }
+.temp-grid .cell.delta { background: none; border-color: transparent; font-weight: 600; }
+.temp-grid .cell.delta.pos { color: var(--ember); }
+.temp-grid .cell.delta.neg { color: var(--smoke); }
+.temp-grid .cell.delta.zero { color: var(--text-muted); font-weight: 500; }

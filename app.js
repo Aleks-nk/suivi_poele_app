@@ -350,9 +350,34 @@ function renderCharts() {
 
 /* ---------------- Sessions (cartes) ---------------- */
 
-function tempChip(label, value) {
-  if (value === null || value === undefined || value === "") return "";
-  return `<span class="temp-chip"><span class="k">${label}</span>${value}°</span>`;
+function tempVal(v) {
+  return (v === null || v === undefined || v === "" || isNaN(v)) ? null : Number(v);
+}
+
+// Grille par pièce : température au début, à l'arrêt, et écart (Δ)
+function tempGridHtml(s) {
+  const rooms = [["bas", "Bas"], ["o", "Ch. O"], ["z", "Ch. Z"], ["n", "Ch. N"]];
+  const cols = rooms
+    .map(([k, label]) => ({ label, start: tempVal(s["temp_ambiante_" + k]), stop: tempVal(s["temp_arret_" + k]) }))
+    .filter((c) => c.start !== null || c.stop !== null);
+  if (!cols.length) return "";
+  const hasStop = cols.some((c) => c.stop !== null);
+  const cell = (v) => (v === null ? '<div class="cell empty">—</div>' : `<div class="cell">${v}°</div>`);
+
+  let html = `<div class="temp-grid" style="grid-template-columns: 54px repeat(${cols.length}, minmax(0, 1fr));">`;
+  html += "<div></div>" + cols.map((c) => `<div class="th">${c.label}</div>`).join("");
+  html += '<div class="rl">Début</div>' + cols.map((c) => cell(c.start)).join("");
+  if (hasStop) {
+    html += '<div class="rl">Arrêt</div>' + cols.map((c) => cell(c.stop)).join("");
+    html += '<div class="rl">Δ</div>' + cols.map((c) => {
+      if (c.start === null || c.stop === null) return '<div class="cell delta zero">—</div>';
+      const d = Number((c.stop - c.start).toFixed(1));
+      const cls = d > 0 ? "pos" : d < 0 ? "neg" : "zero";
+      const txt = d > 0 ? `+${d}°` : d < 0 ? `−${Math.abs(d)}°` : "0°";
+      return `<div class="cell delta ${cls}">${txt}</div>`;
+    }).join("");
+  }
+  return html + "</div>";
 }
 
 function renderSessionsList(filter = "") {
@@ -371,23 +396,21 @@ function renderSessionsList(filter = "") {
       s.nettoyage ? '<span class="pill" style="background:var(--smoke); color:#0d1416;">🧹 Nettoyage</span>' : "",
       s.charge ? '<span class="pill" style="background:var(--gold); color:#1a0f08;">🔄 Charge</span>' : "",
     ].join(" ");
-    const temps = [
-      tempChip("Demandée", s.temp_demandee), tempChip("Amb. bas", s.temp_ambiante_bas),
-      tempChip("Amb. O", s.temp_ambiante_o), tempChip("Amb. Z", s.temp_ambiante_z), tempChip("Amb. N", s.temp_ambiante_n),
-      tempChip("Arrêt bas", s.temp_arret_bas), tempChip("Arrêt O", s.temp_arret_o), tempChip("Arrêt Z", s.temp_arret_z), tempChip("Arrêt N", s.temp_arret_n),
-    ].join("");
+    const reglages = [];
+    if (s.puissance) reglages.push(`Puissance ${s.puissance}`);
+    if (tempVal(s.temp_demandee) !== null) reglages.push(`${tempVal(s.temp_demandee)}°`);
 
     div.innerHTML = `
       <div class="session-card-head">
         <span class="sdate">${fmtDate(s.date)}</span>
         <span class="stimes">${s.allumage || "?"} → ${s.arret || (open ? "en cours" : "?")}</span>
         <span class="sduree">${dur}</span>
-        ${s.puissance ? `<span class="spuiss">Puissance ${s.puissance}</span>` : ""}
+        ${reglages.length ? `<span class="spuiss">${reglages.join(" · ")}</span>` : ""}
         ${pills}
         <span class="spacer"></span>
         <span class="row-actions"><button class="edit" title="Modifier" data-edit="${s._id}">✎</button><button title="Supprimer" data-id="${s._id}">✕</button></span>
       </div>
-      ${temps ? `<div class="temp-readout">${temps}</div>` : ""}
+      ${tempGridHtml(s)}
       ${s.commentaires ? `<div class="session-comment">${s.commentaires}</div>` : ""}
     `;
     list.appendChild(div);
