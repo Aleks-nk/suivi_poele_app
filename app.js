@@ -299,12 +299,37 @@ function avgOf(arr) {
   return arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : null;
 }
 
+function isoDaysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function currentPeriod() {
+  return SETTINGS && SETTINGS.periodeTemp === "all" ? "all" : "30";
+}
+
+function initPeriodToggle() {
+  const buttons = document.querySelectorAll(".period-toggle button");
+  const paint = () => buttons.forEach((b) => b.classList.toggle("active", b.dataset.period === currentPeriod()));
+  buttons.forEach((b) => b.addEventListener("click", () => {
+    SETTINGS.periodeTemp = b.dataset.period;
+    saveSettings(SETTINGS);
+    paint();
+    renderRoomCharts();
+  }));
+  paint();
+}
+
 function renderRoomCharts() {
   const c = chartColors();
+  // période affichée : 30 derniers jours (par défaut) ou tout l'historique
+  const cutoff = currentPeriod() === "all" ? null : isoDaysAgo(29);
+  const sessionsP = DATA.sessions.filter((s) => !cutoff || (s.date || "") >= cutoff);
 
   // jours ayant au moins un relevé de température, moyenne par jour et par pièce
   const byDay = {};
-  DATA.sessions.forEach((s) => {
+  sessionsP.forEach((s) => {
     if (!s.date) return;
     ROOM_CHARTS.forEach(({ k }) => {
       const st = tempVal(s["temp_ambiante_" + k]);
@@ -335,7 +360,7 @@ function renderRoomCharts() {
 
     // écart moyen (arrêt - début) sur les sessions où les deux relevés existent
     const diffs = [];
-    DATA.sessions.forEach((s) => {
+    sessionsP.forEach((s) => {
       const st = tempVal(s["temp_ambiante_" + k]), en = tempVal(s["temp_arret_" + k]);
       if (st !== null && en !== null) diffs.push(en - st);
     });
@@ -710,6 +735,7 @@ async function startApp() {
   initNowButtons();
   initForms();
   initSettings();
+  initPeriodToggle();
   await reloadAll();
 }
 

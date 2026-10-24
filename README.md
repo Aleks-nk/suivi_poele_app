@@ -32,7 +32,7 @@ Le site est protégé par un compte partagé (un seul email/mot de passe pour to
 
 ## Fonctionnement
 
-- **Tableau de bord** : stock actuel (jauge), autonomie estimée, statistiques clés, 4 mini-graphiques de températures (un par pièce : bas, O, Z, N, début et arrêt par jour, avec l'écart moyen) et 3 graphiques (heures de chauffe/mois, sacs consommés/mois, stock dans le temps).
+- **Tableau de bord** : stock actuel (jauge), autonomie estimée, statistiques clés, 4 mini-graphiques de températures (un par pièce : bas, O, Z, N, début et arrêt par jour, avec l'écart moyen, sur 2 colonnes, filtrables sur les 30 derniers jours ou tout l'historique) et 3 graphiques (heures de chauffe/mois, sacs consommés/mois, stock dans le temps).
 - **Session en deux temps** : à l'allumage tu saisis l'heure (bouton « Maintenant ») et les températures du moment, sans heure d'arrêt ; un encadré « 🔥 Poêle allumé » reste affiché avec un bouton « ■ Arrêter le poêle » qui demande l'heure d'arrêt, les températures d'arrêt, Nettoyage/Charge et un commentaire, puis calcule la durée.
 - **Historique** : onglet dédié, du plus récent au plus ancien, avec modification (✎) et suppression de chaque session.
 - **Sessions** : formulaire avec durée calculée automatiquement, températures des 3 chambres (O, Z, N) à l'ambiante et à l'arrêt, boutons Nettoyage/Charge, historique en cartes (adapté au mobile, pas de défilement latéral).

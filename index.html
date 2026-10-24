@@ -68,7 +68,13 @@
   <section class="panel active" id="panel-dashboard">
     <div class="stat-grid" id="statGrid"></div>
 
-    <h3 class="section-title">Températures par jour : début et arrêt</h3>
+    <div class="section-head">
+      <h3 class="section-title">Températures par jour : début et arrêt</h3>
+      <div class="period-toggle" role="group" aria-label="Période affichée">
+        <button type="button" data-period="30">30 derniers jours</button>
+        <button type="button" data-period="all">Tout</button>
+      </div>
+    </div>
     <div class="room-grid">
       <div class="room-card">
         <div class="room-head">
@@ -77,7 +83,7 @@
         </div>
         <div class="mini-chart">
           <canvas id="chartRoom_bas"></canvas>
-          <p class="chart-empty" id="empty_bas" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+          <p class="chart-empty" id="empty_bas" style="display:none;">Pas de relevés pour cette pièce sur cette période.</p>
         </div>
       </div>
       <div class="room-card">
@@ -87,7 +93,7 @@
         </div>
         <div class="mini-chart">
           <canvas id="chartRoom_o"></canvas>
-          <p class="chart-empty" id="empty_o" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+          <p class="chart-empty" id="empty_o" style="display:none;">Pas de relevés pour cette pièce sur cette période.</p>
         </div>
       </div>
       <div class="room-card">
@@ -97,7 +103,7 @@
         </div>
         <div class="mini-chart">
           <canvas id="chartRoom_z"></canvas>
-          <p class="chart-empty" id="empty_z" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+          <p class="chart-empty" id="empty_z" style="display:none;">Pas de relevés pour cette pièce sur cette période.</p>
         </div>
       </div>
       <div class="room-card">
@@ -107,7 +113,7 @@
         </div>
         <div class="mini-chart">
           <canvas id="chartRoom_n"></canvas>
-          <p class="chart-empty" id="empty_n" style="display:none;">Pas encore de relevés pour cette pièce.</p>
+          <p class="chart-empty" id="empty_n" style="display:none;">Pas de relevés pour cette pièce sur cette période.</p>
         </div>
       </div>
     </div>
