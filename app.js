@@ -121,6 +121,7 @@ function initTabs() {
     btn.addEventListener("click", () => {
       // quitter l'onglet Sessions en plein milieu d'une modification = on annule la modification
       if (editingId && btn.dataset.target !== "panel-sessions") cancelEditSession(false);
+      if ((editingAchatId || editingStockId) && btn.dataset.target !== "panel-achats") { cancelEditAchat(); cancelEditStock(); }
       activateTab(btn.dataset.target);
     });
   });
@@ -173,7 +174,84 @@ function cancelEditSession(goBackToHistory = true) {
   document.getElementById("editBanner").style.display = "none";
   document.getElementById("btnSubmitSession").textContent = "+ Ajouter la session";
   document.getElementById("btnCancelEdit").style.display = "none";
+  prefillFromLast();
   if (goBackToHistory) activateTab("panel-historique");
+}
+
+/* ---------------- Pré-remplissage du formulaire de session ---------------- */
+
+function prefillFromLast() {
+  if (editingId) return;
+  const f = document.getElementById("formSession");
+  if (!f) return;
+  const rows = sortSessionsDesc(DATA.sessions);
+  const lastP = rows.find((s) => tempVal(s.puissance) !== null);
+  const lastT = rows.find((s) => tempVal(s.temp_demandee) !== null);
+  if (lastP && f.puissance.value === "") f.puissance.value = lastP.puissance;
+  if (lastT && f.temp_demandee.value === "") f.temp_demandee.value = lastT.temp_demandee;
+}
+
+/* ---------------- Modification des achats et du stock ---------------- */
+
+let editingAchatId = null;
+let editingStockId = null;
+
+function startEditAchat(id) {
+  const a = DATA.achats.find((x) => x._id === id);
+  if (!a) return;
+  editingAchatId = id;
+  const f = document.getElementById("formAchat");
+  f.date.value = a.date || todayISO();
+  f.magasin.value = a.magasin || "";
+  f.marque.value = a.marque || "";
+  f.nb_sacs.value = a.nb_sacs ?? "";
+  f.prix_sac.value = a.prix_sac ?? "";
+  f.note.value = a.note || "";
+  document.getElementById("formAchatTitle").textContent = "Modifier l'achat";
+  const b = document.getElementById("editBannerAchat");
+  b.style.display = "block";
+  b.textContent = `Modification de l'achat du ${fmtDate(a.date)}. Le stock n'est pas modifié : corrige-le si besoin avec « Corriger le stock ».`;
+  document.getElementById("btnSubmitAchat").textContent = "Enregistrer les modifications";
+  document.getElementById("btnCancelAchat").style.display = "";
+  f.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cancelEditAchat() {
+  editingAchatId = null;
+  const f = document.getElementById("formAchat");
+  f.reset();
+  setDefaultDate(f);
+  document.getElementById("formAchatTitle").textContent = "Ajouter un achat";
+  document.getElementById("editBannerAchat").style.display = "none";
+  document.getElementById("btnSubmitAchat").textContent = "+ Ajouter l'achat (et ajouter au stock)";
+  document.getElementById("btnCancelAchat").style.display = "none";
+}
+
+function startEditStock(id) {
+  const st = DATA.stock.find((x) => x._id === id);
+  if (!st) return;
+  editingStockId = id;
+  const f = document.getElementById("formStock");
+  f.date.value = st.date || todayISO();
+  f.stock_sacs.value = st.stock_sacs ?? "";
+  document.getElementById("formStockTitle").textContent = "Modifier le relevé de stock";
+  const b = document.getElementById("editBannerStock");
+  b.style.display = "block";
+  b.textContent = `Modification du relevé du ${fmtDate(st.date)}.`;
+  document.getElementById("btnSubmitStock").textContent = "Enregistrer les modifications";
+  document.getElementById("btnCancelStock").style.display = "";
+  f.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cancelEditStock() {
+  editingStockId = null;
+  const f = document.getElementById("formStock");
+  f.reset();
+  setDefaultDate(f);
+  document.getElementById("formStockTitle").textContent = "Corriger le stock (inventaire)";
+  document.getElementById("editBannerStock").style.display = "none";
+  document.getElementById("btnSubmitStock").textContent = "Enregistrer le relevé";
+  document.getElementById("btnCancelStock").style.display = "none";
 }
 
 /* ---------------- Stock helpers ---------------- */
@@ -238,6 +316,34 @@ function renderGauge() {
 
 /* ---------------- Dashboard stats + charts ---------------- */
 
+function nettoyageInfo() {
+  const chrono = [...DATA.sessions].sort((x, y) =>
+    (x.date || "").localeCompare(y.date || "") || (x.allumage || "").localeCompare(y.allumage || "") || (x.seq || 0) - (y.seq || 0));
+  let idx = -1;
+  chrono.forEach((s, i) => { if (s.nettoyage) idx = i; });
+  const heures = chrono.slice(idx + 1).reduce((acc, s) => acc + (Number(s.duree_h) || 0), 0);
+  if (idx === -1) return { none: true, heures };
+  const last = chrono[idx];
+  const days = Math.round((new Date(isoDaysAgo(0)) - new Date(last.date)) / 86400000);
+  return { none: false, last, days, heures };
+}
+
+// Coût par heure : sacs consommés (baisses de stock) depuis la première session suivie × prix moyen du sac ÷ heures de chauffe
+function coutParHeure(prixSac) {
+  const withDur = DATA.sessions.filter((s) => s.date && Number(s.duree_h) > 0);
+  if (!withDur.length) return { cout: null, heures: 0, sacs: 0 };
+  const first = withDur.map((s) => s.date).sort()[0];
+  const heures = withDur.reduce((acc, s) => acc + Number(s.duree_h), 0);
+  const chrono = sortChrono(DATA.stock);
+  let sacs = 0;
+  for (let i = 1; i < chrono.length; i++) {
+    const delta = Number(chrono[i].stock_sacs) - Number(chrono[i - 1].stock_sacs);
+    if (delta < 0 && chrono[i].date >= first) sacs += -delta;
+  }
+  if (!prixSac || sacs <= 0 || heures <= 0) return { cout: null, heures, sacs };
+  return { cout: (sacs * prixSac) / heures, heures, sacs };
+}
+
 function renderStatCards() {
   const sessions = DATA.sessions;
   const nbSessions = sessions.length;
@@ -248,9 +354,32 @@ function renderStatCards() {
   const temps = sessions.map((s) => s.temp_ambiante_bas).filter((t) => t !== null && t !== undefined && !isNaN(t));
   const tempMoy = temps.length ? temps.reduce((a, b) => a + Number(b), 0) / temps.length : null;
 
+  // nettoyage
+  const net = nettoyageInfo();
+  const seuil = Number(SETTINGS && SETTINGS.seuilNettoyage) || 0;
+  const alerte = seuil > 0 && net.heures >= seuil;
+  let nettoyageCard;
+  if (net.none) {
+    nettoyageCard = { label: "Dernier nettoyage", value: "—", sub: "aucun enregistré" + (net.heures ? ` · ${num(net.heures, 1)} h chauffées` : "") };
+  } else {
+    const quand = net.days <= 0 ? "aujourd'hui" : net.days === 1 ? "hier" : `il y a ${net.days} j`;
+    nettoyageCard = { label: "Dernier nettoyage", value: quand, sub: `${num(net.heures, 1)} h de chauffe depuis` };
+  }
+  if (seuil > 0) nettoyageCard.sub += ` · seuil ${seuil} h`;
+  if (alerte) { nettoyageCard.sub += " · nettoyage conseillé"; nettoyageCard.alert = true; }
+
+  // coût par heure
+  const cph = coutParHeure(prixMoyenSac);
+  const sacsTxt = cph.sacs > 1 ? "sacs" : "sac";
+  const coutCard = cph.cout !== null
+    ? { label: "Coût par heure", value: num(cph.cout, 2) + " €/h", sub: `${num(cph.heures, 0)} h · ${num(cph.sacs, 1)} ${sacsTxt}${cph.heures < 20 ? " · peu fiable" : ""}` }
+    : { label: "Coût par heure", value: "—", sub: "pas assez de données" };
+
   const grid = document.getElementById("statGrid");
   grid.innerHTML = "";
   const cards = [
+    nettoyageCard,
+    coutCard,
     { label: "Sessions enregistrées", value: nbSessions, sub: "depuis le début du suivi" },
     { label: "Heures de chauffe", value: num(totalHeures, 0) + " h", sub: "cumul de toutes les sessions" },
     { label: "Dépensé en granulés", value: num(totalAchats, 2) + " €", sub: `${num(totalSacsAchetes, 0)} sacs achetés` },
@@ -259,7 +388,7 @@ function renderStatCards() {
   ];
   cards.forEach((c) => {
     const div = document.createElement("div");
-    div.className = "stat-card";
+    div.className = "stat-card" + (c.alert ? " alert" : "");
     div.innerHTML = `<div class="label">${c.label}</div><div class="value">${c.value}</div><div class="sub">${c.sub}</div>`;
     grid.appendChild(div);
   });
@@ -530,10 +659,11 @@ function renderAchatsTable() {
       <td>${a.nb_sacs ?? "—"}</td><td>${a.prix_sac ?? "—"} €</td>
       <td><span class="pill">${num(a.prix_total, 2) ?? "—"} €</span></td>
       <td class="wrap-cell">${a.note || ""}</td>
-      <td class="row-actions"><button title="Supprimer" data-id="${a._id}">✕</button></td>
+      <td class="row-actions"><button class="edit" title="Modifier" data-edit="${a._id}">✎</button><button title="Supprimer" data-id="${a._id}">✕</button></td>
     `;
     tbody.appendChild(tr);
   });
+  tbody.querySelectorAll("button[data-edit]").forEach((btn) => btn.addEventListener("click", () => startEditAchat(btn.dataset.edit)));
   tbody.querySelectorAll("button[data-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Supprimer cet achat ? (le stock ajouté par cet achat ne sera pas retiré automatiquement)")) return;
@@ -551,9 +681,10 @@ function renderStockTable() {
   document.getElementById("stockEmpty").style.display = rows.length ? "none" : "block";
   rows.forEach((s) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${fmtDate(s.date)}</td><td><span class="pill">${s.stock_sacs} sacs</span></td><td class="row-actions"><button title="Supprimer" data-id="${s._id}">✕</button></td>`;
+    tr.innerHTML = `<td>${fmtDate(s.date)}</td><td><span class="pill">${s.stock_sacs} sacs</span></td><td class="row-actions"><button class="edit" title="Modifier" data-edit="${s._id}">✎</button><button title="Supprimer" data-id="${s._id}">✕</button></td>`;
     tbody.appendChild(tr);
   });
+  tbody.querySelectorAll("button[data-edit]").forEach((btn) => btn.addEventListener("click", () => startEditStock(btn.dataset.edit)));
   tbody.querySelectorAll("button[data-id]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Supprimer ce relevé de stock ?")) return;
@@ -636,6 +767,13 @@ function initForms() {
       date, magasin: f.magasin.value || null, marque: f.marque.value || null,
       nb_sacs: nb, prix_sac: prixSac, prix_total: num(nb * prixSac, 2), note: f.note.value || null,
     };
+    if (editingAchatId) {
+      const { error: upErr } = await db.from("achats").update(entry).eq("id", editingAchatId);
+      if (upErr) { console.error(upErr); showSyncStatus("Erreur de modification de l'achat", true); return; }
+      cancelEditAchat();
+      reloadAll();
+      return;
+    }
     const { error } = await db.from("achats").insert(entry);
     if (error) { console.error(error); showSyncStatus("Erreur d'ajout de l'achat", true); return; }
     if (nb > 0) await pushStockEntry(date, currentStock() + nb);
@@ -647,11 +785,21 @@ function initForms() {
   document.getElementById("formStock").addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
+    if (editingStockId) {
+      const { error: upErr } = await db.from("stock").update({ date: f.date.value || todayISO(), stock_sacs: Number(f.stock_sacs.value) }).eq("id", editingStockId);
+      if (upErr) { console.error(upErr); showSyncStatus("Erreur de modification du relevé", true); return; }
+      cancelEditStock();
+      reloadAll();
+      return;
+    }
     await pushStockEntry(f.date.value || todayISO(), Number(f.stock_sacs.value));
     f.reset();
     setDefaultDate(f);
     reloadAll();
   });
+
+  document.getElementById("btnCancelAchat").addEventListener("click", cancelEditAchat);
+  document.getElementById("btnCancelStock").addEventListener("click", cancelEditStock);
 
   document.getElementById("btnMoinsUnSac").addEventListener("click", async () => {
     await pushStockEntry(todayISO(), Math.max(0, currentStock() - 1));
@@ -674,12 +822,12 @@ function initSettings() {
     renderGauge();
   });
 
-  document.getElementById("btnExportJson").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(DATA, null, 1)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `poele-carnet-${todayISO()}.json`;
-    a.click();
+  const seuilInput = document.getElementById("seuilNettoyageInput");
+  seuilInput.value = SETTINGS.seuilNettoyage || "";
+  seuilInput.addEventListener("change", () => {
+    SETTINGS.seuilNettoyage = Number(seuilInput.value) || 0;
+    saveSettings(SETTINGS);
+    renderStatCards();
   });
 
   document.getElementById("btnExportExcel").addEventListener("click", exportExcel);
@@ -725,6 +873,7 @@ function renderAll() {
   renderSessionsList(document.getElementById("searchSessions").value);
   renderAchatsTable();
   renderStockTable();
+  prefillFromLast();
   if (document.getElementById("panel-dashboard").classList.contains("active")) renderCharts();
 }
 

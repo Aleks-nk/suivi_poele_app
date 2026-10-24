@@ -128,6 +128,16 @@
     initAuthGate(startAjoutApp);
   });
 
+  async function prefillFromLast(form) {
+    const { data, error } = await db.from("sessions").select("puissance,temp_demandee")
+      .order("date", { ascending: false }).order("allumage", { ascending: false, nullsFirst: false }).limit(30);
+    if (error || !data) return;
+    const p = data.find((s) => s.puissance !== null);
+    const t = data.find((s) => s.temp_demandee !== null);
+    if (p && form.puissance.value === "") form.puissance.value = p.puissance;
+    if (t && form.temp_demandee.value === "") form.temp_demandee.value = t.temp_demandee;
+  }
+
   async function refreshRunning() {
     renderRunningBox(await fetchOpenSessions(), { onChanged: refreshRunning, notify: showToast });
   }
@@ -137,6 +147,7 @@
     refreshRunning();
     const form = document.getElementById("formSession");
     form.date.value = todayISO();
+    prefillFromLast(form);
     const allumageInput = form.allumage, arretInput = form.arret;
     const dureeDisplay = document.getElementById("dureeDisplay");
     let currentDuree = { h: null, label: null };
@@ -182,6 +193,7 @@
       refreshRunning();
       f.reset();
       form.date.value = todayISO();
+      prefillFromLast(form);
       dureeDisplay.textContent = "renseigne l'allumage et l'arrêt";
       document.getElementById("btnNettoyage").classList.remove("active");
       document.getElementById("btnCharge").classList.remove("active");

@@ -810,3 +810,12 @@ footer {
 @media (max-width: 700px) {
   .room-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- Alerte nettoyage + boutons d'action des tableaux ---------- */
+
+.stat-card.alert { border-color: var(--bad); }
+.stat-card.alert .value { color: var(--bad); }
+.stat-card.alert .sub { color: var(--bad); }
+
+td.row-actions { white-space: nowrap; }
+td.row-actions button { padding: 2px 6px; }

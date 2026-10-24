@@ -34,17 +34,21 @@ Le site est protégé par un compte partagé (un seul email/mot de passe pour to
 
 - **Tableau de bord** : stock actuel (jauge), autonomie estimée, statistiques clés, 4 mini-graphiques de températures (un par pièce : bas, O, Z, N, début et arrêt par jour, avec l'écart moyen, sur 2 colonnes, filtrables sur les 30 derniers jours ou tout l'historique) et 3 graphiques (heures de chauffe/mois, sacs consommés/mois, stock dans le temps).
 - **Session en deux temps** : à l'allumage tu saisis l'heure (bouton « Maintenant ») et les températures du moment, sans heure d'arrêt ; un encadré « 🔥 Poêle allumé » reste affiché avec un bouton « ■ Arrêter le poêle » qui demande l'heure d'arrêt, les températures d'arrêt, Nettoyage/Charge et un commentaire, puis calcule la durée.
+- **Compteur de nettoyage** : une carte du tableau de bord indique depuis quand a eu lieu le dernier nettoyage (bouton Nettoyage d'une session) et combien d'heures de chauffe ont suivi. Un seuil d'alerte en heures se règle dans Réglages (propre à chaque appareil).
+- **Coût par heure** : sacs consommés (baisses de stock) depuis la première session suivie × prix moyen du sac ÷ heures de chauffe. Peu fiable tant qu'il y a peu d'heures.
+- **Pré-remplissage** : le formulaire de session (site et page mobile) reprend la puissance et la température demandée de la dernière session.
+- **Modification des achats et du stock** : bouton ✎ sur chaque ligne. Modifier un achat ne change pas le stock.
 - **Historique** : onglet dédié, du plus récent au plus ancien, avec modification (✎) et suppression de chaque session.
 - **Sessions** : formulaire avec durée calculée automatiquement, températures des 3 chambres (O, Z, N) à l'ambiante et à l'arrêt, boutons Nettoyage/Charge, historique en cartes (adapté au mobile, pas de défilement latéral).
 - **Achats & stock** : bouton "− 1 sac utilisé", achat qui met à jour le stock automatiquement, correction manuelle possible pour recaler après un inventaire.
-- **Réglages** : capacité de référence pour la jauge, export Excel/JSON, suppression complète des données (irréversible).
+- **Réglages** : capacité de référence pour la jauge, export Excel, suppression complète des données (irréversible).
 - **`ajouter.html`** : version mobile minimaliste, uniquement le formulaire de session, connectée à la même base — tout ce que tu ajoutes ici apparaît dans le tableau de bord.
 
 ## ⚠️ À savoir
 
 - La clé `anon` dans `supabase-config.js` est publique par nature (c'est ainsi que fonctionne Supabase pour un site statique), mais elle ne suffit plus à elle seule à accéder aux données depuis que `supabase_auth_policies.sql` a été exécuté — il faut être connecté avec le compte partagé.
 - Le bouton "Tout supprimer" dans Réglages efface définitivement toutes les données côté Supabase (aucune corbeille).
-- Pense à exporter régulièrement un fichier Excel ou JSON comme sauvegarde.
+- Pense à exporter régulièrement un fichier Excel comme sauvegarde.
 
 ## Faire évoluer le site
 

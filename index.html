@@ -202,7 +202,8 @@
 
     <div class="chart-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
       <div class="form-card" style="margin-bottom:0;">
-        <h3>Ajouter un achat</h3>
+        <h3 id="formAchatTitle">Ajouter un achat</h3>
+        <div class="edit-banner" id="editBannerAchat" style="display:none;"></div>
         <form id="formAchat">
           <div class="form-grid">
             <div class="field"><label>Date</label><input type="date" name="date" required></div>
@@ -212,18 +213,25 @@
             <div class="field"><label>Prix / sac (€)</label><input type="number" step="0.01" name="prix_sac" required></div>
           </div>
           <div class="field" style="margin-bottom:14px;"><label>Note</label><input type="text" name="note" placeholder="ex: remise fidélité"></div>
-          <button class="btn" type="submit">+ Ajouter l'achat (et ajouter au stock)</button>
+          <div class="btn-row">
+            <button class="btn" type="submit" id="btnSubmitAchat">+ Ajouter l'achat (et ajouter au stock)</button>
+            <button class="btn ghost" type="button" id="btnCancelAchat" style="display:none;">Annuler</button>
+          </div>
         </form>
       </div>
 
       <div class="form-card" style="margin-bottom:0;">
-        <h3>Corriger le stock (inventaire)</h3>
+        <h3 id="formStockTitle">Corriger le stock (inventaire)</h3>
+        <div class="edit-banner" id="editBannerStock" style="display:none;"></div>
         <form id="formStock">
           <div class="form-grid">
             <div class="field"><label>Date</label><input type="date" name="date" required></div>
             <div class="field"><label>Stock (sacs)</label><input type="number" step="0.5" name="stock_sacs" required></div>
           </div>
-          <button class="btn secondary" type="submit">Enregistrer le relevé</button>
+          <div class="btn-row">
+            <button class="btn secondary" type="submit" id="btnSubmitStock">Enregistrer le relevé</button>
+            <button class="btn ghost" type="button" id="btnCancelStock" style="display:none;">Annuler</button>
+          </div>
         </form>
       </div>
     </div>
@@ -265,11 +273,19 @@
       </div>
 
       <div class="form-card" style="margin-bottom:0;">
+        <h3>Nettoyage</h3>
+        <div class="field">
+          <label>Alerte après (heures de chauffe depuis le dernier nettoyage)</label>
+          <input type="number" step="1" min="0" id="seuilNettoyageInput" placeholder="heures">
+        </div>
+        <p class="hint">Vide ou 0 : pas d'alerte. Reporte-toi à la notice de ton poêle pour la fréquence conseillée. Ce réglage est propre à chaque appareil.</p>
+      </div>
+
+      <div class="form-card" style="margin-bottom:0;">
         <h3>Export</h3>
-        <p class="hint" style="margin-top:0;">Exporte tes données (stockées dans Supabase) en Excel pour les consulter ou les archiver, ou en JSON pour une sauvegarde.</p>
+        <p class="hint" style="margin-top:0;">Exporte tes données (stockées dans Supabase) en Excel pour les consulter ou les archiver.</p>
         <div class="btn-row">
           <button class="btn" id="btnExportExcel">⬇ Exporter en Excel (.xlsx)</button>
-          <button class="btn secondary" id="btnExportJson">⬇ Exporter en JSON</button>
         </div>
       </div>
 
