@@ -149,3 +149,16 @@ function showStopForm(card, s, hooks) {
     hooks.onChanged();
   });
 }
+
+// Anti double-envoi : ignore un 2e envoi du même formulaire pendant que le 1er est en cours.
+// À brancher AVANT le gestionnaire d'envoi principal du formulaire.
+function guardDoubleSubmit(form, ms = 3000) {
+  if (!form) return;
+  form.addEventListener("submit", (e) => {
+    if (form.dataset.busy === "1") { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    form.dataset.busy = "1";
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    setTimeout(() => { delete form.dataset.busy; if (btn) btn.disabled = false; }, ms);
+  });
+}

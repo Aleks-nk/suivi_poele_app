@@ -344,6 +344,21 @@ function coutParHeure(prixSac) {
   return { cout: (sacs * prixSac) / heures, heures, sacs };
 }
 
+// Heures de chauffe entre deux charges de granulés.
+// Convention : une session marquée « Charge » est celle à la fin de laquelle le réservoir est rempli.
+// Un cycle = les sessions qui suivent une charge, jusqu'à la charge suivante incluse.
+function chargeCycles() {
+  const chrono = [...DATA.sessions].sort((x, y) =>
+    (x.date || "").localeCompare(y.date || "") || (x.allumage || "").localeCompare(y.allumage || "") || (x.seq || 0) - (y.seq || 0));
+  const idxs = [];
+  chrono.forEach((s, i) => { if (s.charge) idxs.push(i); });
+  const sumH = (arr) => arr.reduce((acc, s) => acc + (Number(s.duree_h) || 0), 0);
+  const cycles = [];
+  for (let k = 1; k < idxs.length; k++) cycles.push(sumH(chrono.slice(idxs[k - 1] + 1, idxs[k] + 1)));
+  const current = idxs.length ? sumH(chrono.slice(idxs[idxs.length - 1] + 1)) : 0;
+  return { nbCharges: idxs.length, cycles, current };
+}
+
 function renderStatCards() {
   const sessions = DATA.sessions;
   const nbSessions = sessions.length;
@@ -375,10 +390,30 @@ function renderStatCards() {
     ? { label: "Coût par heure", value: num(cph.cout, 2) + " €/h", sub: `${num(cph.heures, 0)} h · ${num(cph.sacs, 1)} ${sacsTxt}${cph.heures < 20 ? " · peu fiable" : ""}` }
     : { label: "Coût par heure", value: "—", sub: "pas assez de données" };
 
+  // heures de chauffe entre deux charges
+  const cc = chargeCycles();
+  let chargeCard;
+  if (cc.cycles.length) {
+    const moy = cc.cycles.reduce((a, b) => a + b, 0) / cc.cycles.length;
+    const last = cc.cycles[cc.cycles.length - 1];
+    chargeCard = {
+      label: "Heures entre 2 charges",
+      value: num(moy, 1) + " h",
+      sub: `moyenne sur ${cc.cycles.length} ${cc.cycles.length > 1 ? "cycles" : "cycle"} · dernier ${num(last, 1)} h · en cours ${num(cc.current, 1)} h`,
+    };
+  } else {
+    chargeCard = {
+      label: "Heures entre 2 charges",
+      value: "—",
+      sub: cc.nbCharges === 1 ? `1 seule charge enregistrée · en cours ${num(cc.current, 1)} h` : "il faut au moins 2 charges enregistrées",
+    };
+  }
+
   const grid = document.getElementById("statGrid");
   grid.innerHTML = "";
   const cards = [
     nettoyageCard,
+    chargeCard,
     coutCard,
     { label: "Sessions enregistrées", value: nbSessions, sub: "depuis le début du suivi" },
     { label: "Heures de chauffe", value: num(totalHeures, 0) + " h", sub: "cumul de toutes les sessions" },
@@ -699,6 +734,9 @@ function renderStockTable() {
 
 function initForms() {
   const form = document.getElementById("formSession");
+  guardDoubleSubmit(form);
+  guardDoubleSubmit(document.getElementById("formAchat"));
+  guardDoubleSubmit(document.getElementById("formStock"));
   const allumageInput = form.allumage, arretInput = form.arret;
   const dureeDisplay = document.getElementById("dureeDisplay");
   let currentDuree = { h: null, label: null };
@@ -877,7 +915,13 @@ function renderAll() {
   if (document.getElementById("panel-dashboard").classList.contains("active")) renderCharts();
 }
 
+let appStarted = false;
+
 async function startApp() {
+  // après une reconnexion (session expirée), on recharge juste les données :
+  // rebrancher les écouteurs doublerait les clics et les enregistrements
+  if (appStarted) { await reloadAll(); return; }
+  appStarted = true;
   SETTINGS = loadSettings();
   document.querySelectorAll('input[name="date"]').forEach((el) => { el.value = todayISO(); });
   initTabs();

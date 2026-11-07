@@ -142,10 +142,15 @@
     renderRunningBox(await fetchOpenSessions(), { onChanged: refreshRunning, notify: showToast });
   }
 
+  let ajoutStarted = false;
+
   function startAjoutApp() {
+    if (ajoutStarted) { refreshRunning(); return; }
+    ajoutStarted = true;
     initNowButtons();
     refreshRunning();
     const form = document.getElementById("formSession");
+    guardDoubleSubmit(form);
     form.date.value = todayISO();
     prefillFromLast(form);
     const allumageInput = form.allumage, arretInput = form.arret;
